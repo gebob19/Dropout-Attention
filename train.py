@@ -24,7 +24,7 @@ Options:
     --valid-niter=<int>                     perform validation after how many iterations [default: 2000]
     --n-valid=<int>                         number of samples to validate on [default: 10000]
     --dropout=<float>                       dropout [default: 0.3]
-    --n-words=<int>                         number of words in language model [default: 10000]
+    --n-words=<int>                         number of words in language model [default: 2000]
 
 """
 import sys
