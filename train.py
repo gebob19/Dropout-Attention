@@ -5,6 +5,7 @@
 
 Usage:
     train.py [options]
+    train.py qtest
 
 Options:
     -h --help                               show this screen.
@@ -14,10 +15,12 @@ Options:
     --hidden-size=<int>                     hidden size [default: 256]
     --clip-grad=<float>                     gradient clipping [default: 5.0]
     --log-every=<int>                       log every [default: 10]
+    --validate-every=<int>                  validate every [default: 10]
     --max-epoch=<int>                       max epoch [default: 30]
     --lr=<float>                            learning rate [default: 0.001]
     --save-to=<file>                        model save path [default: model.bin]
     --valid-niter=<int>                     perform validation after how many iterations [default: 2000]
+    --n-valid=<int>                         number of samples to validate on [default: 1000]
     --dropout=<float>                       dropout [default: 0.3]
     --n-words=<int>                         number of words in language model [default: 10000]
 
@@ -62,10 +65,35 @@ def batch_iter(lang, data, batch_size, shuffle=False):
         yield sents, torch.tensor(targets, dtype=torch.float32, device=device)
 
 
-def train(args):
-    n_words = int(args['--n-words'])
+def qtest():
+    train({'--batch-size': '8',
+            '--clip-grad': '5.0',
+            '--dropout': '0.3',
+            '--embed-size': '20',
+            '--help': False,
+            '--hidden-size': '20',
+            '--log-every': '2',
+            '--lr': '0.001',
+            '--max-epoch': '2',
+            '--n-valid': '8',
+            '--n-words': '1000',
+            '--save-to': 'model.bin',
+            '--seed': '0',
+            '--valid-niter': '1',
+            '--validate-every': '1'})
 
-    df = pd.read_csv('train.csv')
+
+def train(args):
+    n_words =           int(args['--n-words'])
+    valid_niter =       int(args['--validate-every'])
+    model_save_path =   args['--save-to']
+    train_batch_size =  int(args['--batch-size'])
+    epochs =            int(args['--max-epoch'])
+    clip_grad =         float(args['--clip-grad'])
+    n_valid =           int(args['--n-valid'])
+
+    train_df = pd.read_csv('train.csv')
+    test_df = pd.read_csv('test.csv')
     
     lang = load_model()
     lang = lang.top_n_words_model(n_words)
@@ -75,20 +103,18 @@ def train(args):
     model = SentModel(embed_size, hidden_size, lang, device)
     model = model.to(device)
 
-    lr = float(args['--lr'])
-    clip_grad = float(args['--clip-grad'])
-    optimizer = torch.optim.Adam(model.parameters())
+    optimizer = torch.optim.Adam(model.parameters(), lr=float(args['--lr']))
     loss_fcn = nn.BCELoss()
 
-    train_batch_size = int(args['--batch-size'])
-    epochs = int(args['--max-epoch'])
+    hist_valid_scores = []
 
     for e in range(epochs):
-        epoch_loss = 0
-        train_iter = 0
+        epoch_loss = train_iter = 0
         begin_time = time.time()
         
-        for sents, targets in batch_iter(lang, df, train_batch_size, shuffle=True):
+        # train
+        for sents, targets in batch_iter(lang, train_df, train_batch_size, shuffle=True):
+            print('training...{} - {}'.format(train_iter, valid_niter))
             train_iter += 1 
             optimizer.zero_grad()
         
@@ -99,10 +125,33 @@ def train(args):
             loss.backward()
             grad_norm = nn.utils.clip_grad_norm_(model.parameters(), clip_grad)
             optimizer.step() 
+
+            # perform validation
+            if train_iter % valid_niter == 0:
+                print('validating...')
+                threshold = torch.tensor([0.5])
+                n_examples = n_correct = 0
+                test_df = test_df.sample(frac=1.)
+                for sents, targets in batch_iter(lang, test_df[:n_valid], train_batch_size):
+                    preds = (model(sents) >= threshold).float()
+                    n_correct += (1 - torch.abs(preds - targets)).sum()
+                    n_examples += len(targets)
+
+                valid_metric = n_correct / n_examples
+                print("validation accuracy: %.2f" % (valid_metric))
+                is_better = len(hist_valid_scores) == 0 or valid_metric > max(hist_valid_scores)
+                hist_valid_scores.append(valid_metric)
+
+                if is_better: 
+                    print('save currently the best model to [%s]' % model_save_path, file=sys.stderr)
+                    model.save(model_save_path)
+                    # also save the optimizers' state
+                    torch.save(optimizer.state_dict(), model_save_path + '.optim')
         
-        print('epoch %d, avg. loss %.2f, time elapsed %.2f sec' % (e, 
-                                                                    epoch_loss / train_iter,
-                                                                    time.time() - begin_time), file=sys.stderr)
+        print('epoch %d, avg. loss %.2f, validation_acc: %.2f time elapsed %.2f sec' % (e, 
+        epoch_loss / train_iter, 
+        valid_metric, 
+        time.time() - begin_time), file=sys.stderr)
 
 
 def main():
@@ -113,7 +162,10 @@ def main():
     torch.manual_seed(seed)
     np.random.seed(seed * 13 // 7)
 
-    train(args)
+    if args['qtest']:
+        qtest()
+    else:
+        train(args)
 
 if __name__ == '__main__':
     print('using device {}...'.format(device))
