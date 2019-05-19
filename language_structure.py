@@ -2,7 +2,9 @@ import unicodedata
 import re
 import operator
 import pickle
+import time
 
+from io import open
 from bs4 import BeautifulSoup
 from contractions import CONTRACTION_MAP
 from nltk.tokenize.toktok import ToktokTokenizer
