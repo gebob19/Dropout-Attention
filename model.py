@@ -42,4 +42,4 @@ class SentModel(nn.Module):
             'state_dict': self.state_dict()
         }
 
-        torch.save(params, path)
+        torch.save(params, 'model_saves/' + path)

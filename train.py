@@ -36,6 +36,7 @@ import time
 import pandas as pd
 import numpy as np
 import torch.nn as nn
+import matplotlib.pyplot as plt
 
 from tqdm import tqdm
 from torch import optim
@@ -91,7 +92,7 @@ def load(path):
 
 
 def qtest():
-    train({'--batch-size': '8',
+    train({ '--batch-size': '8',
             '--clip-grad': '5.0',
             '--dropout': '0.3',
             '--embed-size': '20',
@@ -123,7 +124,7 @@ def train(args):
     test_df = pd.read_csv('test.csv')
 
     if args['--load']:
-        model, optimizer, lang = load(args['--load-from'])
+        model, optimizer, lang = load('model_saves/' + args['--load-from'])
         print('model loaded...')
     else: 
         lang = load_model()
@@ -180,8 +181,8 @@ def train(args):
                 val_loss = val_loss / n_examples
 
                 is_better = len(val_accuracy_m) == 0 or val_acc > max(val_accuracy_m)
-                val_loss_m.append(val_loss / n_examples)
-                val_accuracy_m.append(val_acc)
+                val_loss_m.append(round(val_loss / n_examples, 4))
+                val_accuracy_m.append(val_acc.item())
 
                 print(('epoch %d, train itr %d, avg. loss %.2f, '
                         'val_acc: %.2f, val_loss: %.2f, '
@@ -194,21 +195,22 @@ def train(args):
                     print('save currently the best model to [%s]' % model_save_path, file=sys.stderr)
                     model.save(model_save_path)
                     # also save the optimizers' state
-                    torch.save(optimizer.state_dict(), model_save_path + '.optim')
-
-                    
+                    torch.save(optimizer.state_dict(), 'model_saves/' + model_save_path + '.optim')
 
             if train_iter % int(args['--log-every']) == 0:
                 # track metrics
-                loss_m.append(loss.item() / len(targets))
+                loss_m.append(round(loss.item() / len(targets), 4))
                 n_correct, n_examples = accuracy(preds, targets)
-                accuracy_m.append(n_correct.float() / n_examples)
+                accuracy_m.append((n_correct.float() / n_examples).item())
 
-            if train_iter > 15: break
+            if args['--qtest'] and train_iter > 5: break
 
-            
-
-    
+    metrics = {'train_loss':loss_m,
+                'train_acc': accuracy_m,
+                'val_loss': val_loss_m,
+                'val_acc': val_accuracy_m}
+    torch.save(metrics, 'metric_saves/' + model_save_path + '.metrics')
+    print('metrics saved...')
 
 
 def main():

@@ -1,5 +1,6 @@
 import pandas as pd
 from pathlib import Path
+import os
 
 from language_structure import Lang, populate_language, dump_model
 
@@ -39,5 +40,9 @@ if __name__ == '__main__':
     lang = Lang()
     populate_language(lang, df, base)
     dump_model(lang)
+
+    # make dir for saves
+    os.mkdir('model_saves')
+    os.mkdir('metric_saves')
     
 
