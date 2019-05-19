@@ -27,7 +27,6 @@ Options:
     --n-words=<int>                         number of words in language model [default: 10000]
 
 """
-
 import sys
 import math
 import torch
@@ -86,7 +85,6 @@ def load(path):
     optimizer = torch.optim.Adam(model.parameters())
     
     model.load_state_dict(model_checkpoint['state_dict'])
-    
     optimizer.load_state_dict(torch.load(path+'.optim'))
 
     return model, optimizer, vocab
