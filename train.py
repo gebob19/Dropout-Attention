@@ -22,7 +22,7 @@ Options:
     --save-to=<file>                        model save path [default: model.bin]
     --load-from=<file>                      model load path [default: model.bin]
     --valid-niter=<int>                     perform validation after how many iterations [default: 2000]
-    --n-valid=<int>                         number of samples to validate on [default: 1000]
+    --n-valid=<int>                         number of samples to validate on [default: 10000]
     --dropout=<float>                       dropout [default: 0.3]
     --n-words=<int>                         number of words in language model [default: 10000]
 
@@ -167,7 +167,7 @@ def train(args):
             absolute_train_time += time.time() - start_train_time
 
             # perform validation
-            if train_iter % valid_niter == 0:
+            if train_iter > int(args['--valid-niter']) and train_iter % valid_niter == 0:
                 # print('validating...')
                 threshold = torch.tensor([0.5])
                 n_examples = n_correct = val_loss = 0
