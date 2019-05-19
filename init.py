@@ -1,6 +1,8 @@
 import pandas as pd
 from pathlib import Path
 
+from language_structure import Lang, populate_language, dump_model
+
 base = Path('../aclImdb')
 
 def extract_helper(path, target):
@@ -13,6 +15,7 @@ def extract_helper(path, target):
     return exs, labels, ratings
 
 if __name__ == '__main__':
+    # parse + structure the data
     neg_exs, neg_labels, neg_ratings = extract_helper('train/neg/', 0)
     pos_exs, pos_labels, pos_ratings = extract_helper('train/pos/', 1)
     
@@ -21,3 +24,10 @@ if __name__ == '__main__':
                             'review_rating': neg_ratings + pos_ratings})
 
     df.to_csv('train.csv', index=False)
+
+    # read the corpus into a language data model
+    lang = Lang()
+    populate_language(lang, df, base)
+    dump_model(lang)
+    
+

@@ -114,6 +114,23 @@ def remove_stopwords(text):
 
 ## Model Helpers
 
+def normalize_and_track(lang, base, path):
+    file = open(str(base/path), encoding='utf-8').read()
+    # normalize
+    clean_file = normalizeString(file, stopwords=True, contractions=False)
+    # track words into model
+    for w in clean_file.split(' '):
+        lang.addWord(w)   
+    return True
+
+def populate_language(lang, df, base):
+    start_time = time.time()
+    results = [normalize_and_track(lang, base, p) for p in df['path'].values]
+    duration = time.time() - start_time
+    print("Normalized and Tracked in {} seconds".format(duration))
+    # Ensure success on all path values
+    assert all(results)
+
 def dump_model(lang, name='imdb_language_class'):
     lang_pkl = pickle.dumps(lang, protocol=pickle.HIGHEST_PROTOCOL)
     open('{}.pkl'.format(name), 'wb').write(lang_pkl)
