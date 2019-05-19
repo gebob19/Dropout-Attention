@@ -59,7 +59,7 @@ def batch_iter(lang, data, batch_size, shuffle=False):
         results = sorted(results, key=lambda e: len(e[0].split(' ')), reverse=True)
         sents, targets = [e[0].split(' ') for e in results], [e[1] for e in results]
         
-        yield sents, torch.tensor(targets, dtype=torch.float32)
+        yield sents, torch.tensor(targets, dtype=torch.float32, device=device)
 
 
 def train(args):
