@@ -207,6 +207,12 @@ def train(args):
                 n_correct, n_examples = accuracy(preds, targets)
                 accuracy_m.append((n_correct.float() / n_examples).item())
 
+                print(('epoch %d, train itr %d, avg. loss %.2f, '
+                        'train accuracy: %.2f, '
+                        'time elapsed %.2f sec') % (e, train_iter,
+                        epoch_loss / train_iter, accuracy_m[-1],
+                        time.time() - begin_time), file=sys.stderr)
+
             if args['--qtest'] and train_iter > 5: break
 
     metrics = {'train_loss':loss_m,
