@@ -16,6 +16,7 @@ def extract_helper(path, target):
     return exs, labels, ratings
 
 if __name__ == '__main__':
+    print('Extracting Data...')
     # parse + structure the *train* data
     neg_exs, neg_labels, neg_ratings = extract_helper('train/neg/', 0)
     pos_exs, pos_labels, pos_ratings = extract_helper('train/pos/', 1)
@@ -36,6 +37,7 @@ if __name__ == '__main__':
     test_df = test_df.sample(frac=1.)
     test_df.to_csv('test.csv', index=False)
 
+    print('Reading Corpus...')
     # read the corpus into a language data model
     lang = Lang()
     populate_language(lang, df, base)
@@ -44,5 +46,7 @@ if __name__ == '__main__':
     # make dir for saves
     os.mkdir('model_saves')
     os.mkdir('metric_saves')
+    
+    print('FIN')
     
 

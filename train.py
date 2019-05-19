@@ -68,7 +68,7 @@ def batch_iter(lang, data, batch_size, shuffle=False):
         yield sents, torch.tensor(targets, dtype=torch.float32, device=device)
 
 
-def accuracy(preds, targets, threshold=torch.tensor([0.5])):
+def accuracy(preds, targets, threshold=torch.tensor([0.5], device=device)):
     preds = (preds >= threshold).float()
     n_correct = torch.eq(preds, targets).sum()
     n_examples = len(targets)
