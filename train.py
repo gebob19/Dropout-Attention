@@ -118,4 +118,5 @@ def main():
     train(args)
 
 if __name__ == '__main__':
+    print('using device {}...'.format(device))
     main()
