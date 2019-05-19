@@ -214,7 +214,8 @@ def train(args):
                 'val_loss': val_loss_m,
                 'val_acc': val_accuracy_m,
                 'total_time': round(time.time() - absolute_start_time, 4),
-                'train_time': round(absolute_train_time, 4)}
+                'train_time': round(absolute_train_time, 4)
+                'args': args}
     torch.save(metrics, 'metric_saves/' + model_save_path + '.metrics')
     
     pp = pprint.PrettyPrinter(indent=4)
