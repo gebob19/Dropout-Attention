@@ -99,8 +99,6 @@ def train(args):
             loss.backward()
             grad_norm = nn.utils.clip_grad_norm_(model.parameters(), clip_grad)
             optimizer.step()
-
-            print('iteration done...')
         
         print('epoch %d, avg. loss %.2f, time elapsed %.2f sec' % (e, 
                                                                     epoch_loss / train_iter,
