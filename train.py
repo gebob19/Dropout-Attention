@@ -21,7 +21,7 @@ Options:
     --lr=<float>                            learning rate [default: 0.001]
     --save-to=<file>                        model save path [default: model.bin]
     --load-from=<file>                      model load path [default: model.bin]
-    --valid-niter=<int>                     perform validation after how many iterations [default: 2000]
+    --valid-niter=<int>                     perform validation after how many iterations [default: 500]
     --n-valid=<int>                         number of samples to validate on [default: 10000]
     --dropout=<float>                       dropout [default: 0.3]
     --n-words=<int>                         number of words in language model [default: 2000]
