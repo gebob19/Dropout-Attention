@@ -7,6 +7,8 @@ class SentModel(nn.Module):
     def __init__(self, embed_size, hidden_size, lang, device):
         super(SentModel, self).__init__()
         self.device = device
+        self.embed_size = embed_size
+        self.hidden_size = hidden_size
         self.lang = lang
         self.embed = nn.Embedding(len(lang.word2id), embed_size, padding_idx=lang.word2id['<pad>'])
         self.gru = nn.GRU(embed_size, hidden_size, bias=True)
@@ -32,3 +34,12 @@ class SentModel(nn.Module):
         out = torch.sigmoid(linear_out).squeeze(-1)
         
         return out
+    
+    def save(self, path):
+        params = {
+            'args': dict(embed_size=self.embed_size, hidden_size=self.hidden_size),
+            'vocab': self.lang,
+            'state_dict': self.state_dict()
+        }
+
+        torch.save(params, path)
