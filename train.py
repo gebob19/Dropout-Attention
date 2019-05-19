@@ -32,6 +32,7 @@ import sys
 import math
 import torch
 import time
+import pprint
 
 import pandas as pd
 import numpy as np
@@ -143,6 +144,8 @@ def train(args):
     accuracy_m = []
     val_loss_m = []
     val_accuracy_m = []
+    absolute_start_time = time.time()
+    absolute_train_time = 0
 
     for e in range(epochs):
         epoch_loss = train_iter = val_acc = val_loss = 0
@@ -151,6 +154,7 @@ def train(args):
         # train
         for sents, targets in batch_iter(lang, train_df, train_batch_size, shuffle=True):
             # print('training...{} - {}'.format(train_iter, valid_niter))
+            start_train_time = time.time()
             train_iter += 1 
             optimizer.zero_grad()
         
@@ -161,6 +165,8 @@ def train(args):
             loss.backward()
             grad_norm = nn.utils.clip_grad_norm_(model.parameters(), clip_grad)
             optimizer.step() 
+
+            absolute_train_time += time.time() - start_train_time
 
             # perform validation
             if train_iter % valid_niter == 0:
@@ -208,10 +214,13 @@ def train(args):
     metrics = {'train_loss':loss_m,
                 'train_acc': accuracy_m,
                 'val_loss': val_loss_m,
-                'val_acc': val_accuracy_m}
+                'val_acc': val_accuracy_m,
+                'total_time': round(time.time() - absolute_start_time, 4),
+                'train_time': round(absolute_train_time, 4)}
     torch.save(metrics, 'metric_saves/' + model_save_path + '.metrics')
-    print('metrics saved...')
-
+    
+    pp = pprint.PrettyPrinter(indent=4)
+    pp.pprint(metrics)
 
 def main():
     args = docopt(__doc__)
