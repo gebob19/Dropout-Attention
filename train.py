@@ -25,8 +25,12 @@ Options:
     --n-valid=<int>                         number of samples to validate on [default: 10000]
     --dropout=<float>                       dropout [default: 0.3]
     --n-words=<int>                         number of words in language model [default: 2000]
+    --max-sent-len=<int>                    max sentence length to encode  [default: 10000]
+    --n-heads=<int>                         n of parralel attention layers in MHA [default: 3]
+    --n-layers=<int>                        n of transfomer layers stacked [default: 3]
 
 """
+
 import sys
 import math
 import torch
@@ -43,8 +47,8 @@ from torch import optim
 from pathlib import Path
 from docopt import docopt
 
-from model import SentModel
-from utils import prepare_df
+from model import TransformerClassifier
+from utils import prepare_df, clip_sents
 from language_structure import load_model, Lang
 
 base = Path('../aclImdb')
@@ -64,6 +68,9 @@ def batch_iter(lang, data, batch_size, shuffle=False):
         results = prepare_df(lang, batch_df, base)
         results = sorted(results, key=lambda e: len(e[0].split(' ')), reverse=True)
         sents, targets = [e[0].split(' ') for e in results], [e[1] for e in results]
+
+        # fast and easy clip to minimum length so no padding needed
+        sents = clip_sents(sents)
         
         yield sents, torch.tensor(targets, dtype=torch.float32, device=device)
 
@@ -74,14 +81,27 @@ def accuracy(preds, targets, threshold=torch.tensor([0.5], device=device)):
     n_examples = len(targets)
     return n_correct, n_examples
 
-
 def load(path):
     model_checkpoint = torch.load(path)
     vocab = model_checkpoint['vocab']
 
-    model = SentModel(model_checkpoint['args']['embed_size'],
-                     model_checkpoint['args']['hidden_size'],
-                     vocab, device)
+    n_heads =           int(model_checkpoint['args']['--n-heads'])
+    n_layers =          int(model_checkpoint['args']['--n-layers'])
+    embed_size =        int(model_checkpoint['args']['--embed-size'])
+    hidden_size =       int(model_checkpoint['args']['--hidden-size'])
+    max_sentence_len =  int(model_checkpoint['args']['--max-sent-len'])
+    dropout =  float(model_checkpoint['args']['--dropout'])
+
+    model = TransformerClassifier(lang=vocab, 
+                                    device=device,
+                                    embed_dim=embed_size, 
+                                    hidden_dim=hidden_size,
+                                    num_embed=vocab.n_words,
+                                    num_pos=max_sentence_len, 
+                                    num_heads=n_heads,
+                                    num_layers=n_layers,
+                                    dropout=dropout,
+                                    n_classes=1)
     optimizer = torch.optim.Adam(model.parameters())
     
     model.load_state_dict(model_checkpoint['state_dict'])
@@ -89,36 +109,35 @@ def load(path):
 
     return model, optimizer, vocab
 
-def save(model_save_path, metrics, model, optimizer):
+def save(model_save_path, metrics, model, optimizer, args):
     # save metrics
     torch.save(metrics, 'metric_saves/' + model_save_path + '.metrics')
 
     # save model + optimizer
-    model.save('model_saves/' + model_save_path)
+    model.save('model_saves/' + model_save_path, args)
     torch.save(optimizer.state_dict(), 'model_saves/' + model_save_path + '.optim')
 
     print('Model saved.')
 
 
-def qtest():
-    train({ '--batch-size': '8',
-            '--clip-grad': '5.0',
-            '--dropout': '0.3',
-            '--embed-size': '20',
-            '--help': False,
-            '--hidden-size': '20',
-            '--load': False,
-            '--load-from': 'model.bin',
-            '--log-every': '5',
-            '--lr': '0.001',
-            '--max-epoch': '2',
-            '--n-valid': '8',
-            '--n-words': '1000',
-            '--qtest': True,
-            '--save-to': 'model.bin',
-            '--seed': '0',
-            '--valid-niter': '10',
-            '--validate-every': '5'})
+def qtest(args):
+    args['--batch-size'] = '8'
+    args['--embed-size'] = '20'
+    args['--hidden-size'] = '20'
+    args['--n-heads'] = '1'
+    args['--n-layers'] =  '1'
+
+    args['--n-words'] = '1000'
+    
+    args['--log-every'] = '5'
+    args['--validate-every'] = '5'
+    args['--n-valid'] = '8'
+    args['--valid-niter'] = '10'
+    
+    args['--save-to'] = 'quick_test_model.bin'
+
+    train(args)
+
 
 def train(args):
     n_words =           int(args['--n-words'])
@@ -128,9 +147,14 @@ def train(args):
     epochs =            int(args['--max-epoch'])
     clip_grad =         float(args['--clip-grad'])
     n_valid =           int(args['--n-valid'])
+    max_sentence_len =  int(args['--max-sent-len'])
+    n_heads =           int(args['--n-heads'])
+    n_layers =          int(args['--n-layers'])
 
-    train_df = pd.read_csv('train.csv')
     test_df = pd.read_csv('test.csv')
+    train_df = pd.read_csv('train.csv')
+    # train on longer lengths 
+    train_df = train_df[train_df.file_length > 200]
 
     if args['--load']:
         model, optimizer, lang = load('model_saves/' + args['--load-from'])
@@ -141,7 +165,17 @@ def train(args):
 
         hidden_size = int(args['--hidden-size'])
         embed_size = int(args['--embed-size'])
-        model = SentModel(embed_size, hidden_size, lang, device)
+
+        model = TransformerClassifier(lang=lang, device=device,
+                                      embed_dim=embed_size, 
+                                      hidden_dim=hidden_size,
+                                      num_embed=lang.n_words,
+                                      num_pos=max_sentence_len, 
+                                      num_heads=n_heads,
+                                      num_layers=n_layers,
+                                      dropout=float(args['--dropout']),
+                                      n_classes=1)
+
         model = model.to(device)
         optimizer = torch.optim.Adam(model.parameters(), lr=float(args['--lr']))
 
@@ -156,6 +190,7 @@ def train(args):
     absolute_train_time = 0
 
     try:
+        model.train()
         for e in range(epochs):
             epoch_loss = train_iter = val_acc = val_loss = 0
             begin_time = time.time()
@@ -179,18 +214,19 @@ def train(args):
 
                 # perform validation
                 if train_iter > int(args['--valid-niter']) and train_iter % valid_niter == 0:
-                    # print('validating...')
+                    model.eval()
                     threshold = torch.tensor([0.5])
                     n_examples = n_correct = val_loss = 0
 
-                    test_df = test_df.sample(frac=1.)
-                    for val_sents, val_targets in batch_iter(lang, test_df[:n_valid], train_batch_size):
-                        val_preds = model(val_sents)
-                        batch_n_correct, batch_n_examples = accuracy(val_preds, val_targets)
+                    with torch.no_grad():
+                        test_df = test_df.sample(frac=1.)
+                        for val_sents, val_targets in batch_iter(lang, test_df[:n_valid], train_batch_size):
+                            val_preds = model(val_sents)
+                            batch_n_correct, batch_n_examples = accuracy(val_preds, val_targets)
 
-                        val_loss += loss_fcn(val_preds, val_targets).item()
-                        n_correct += batch_n_correct
-                        n_examples += batch_n_examples
+                            val_loss += loss_fcn(val_preds, val_targets).item()
+                            n_correct += batch_n_correct
+                            n_examples += batch_n_examples
 
                     val_acc = n_correct.float() / n_examples
                     val_loss = val_loss / n_examples
@@ -208,7 +244,7 @@ def train(args):
 
                     if is_better: 
                         print('save currently the best model to [%s]' % model_save_path, file=sys.stderr)
-                        model.save(model_save_path)
+                        model.save(model_save_path, args)
                         # also save the optimizers' state
                         torch.save(optimizer.state_dict(), 'model_saves/' + model_save_path + '.optim')
 
@@ -227,19 +263,21 @@ def train(args):
 
                 if args['--qtest'] and train_iter > 5: break
     finally:
+
         metrics = {'train_loss':loss_m,
                 'train_acc': accuracy_m,
                 'val_loss': val_loss_m,
                 'val_acc': val_accuracy_m,
                 'total_time': round(time.time() - absolute_start_time, 4),
-                'train_time': round(absolute_train_time, 4),
-                'args': args}
+                'train_time': round(absolute_train_time, 4)}
         pp = pprint.PrettyPrinter(indent=4)
         pp.pprint(metrics)
 
-        save(model_save_path, metrics, model, optimizer)
+        end = 'cancel' if e != (epochs-1) else 'complete'
+        prefix = 'e={}_itr={}_{}_'.format(e, train_iter, end)
+        save(prefix + model_save_path, metrics, model, optimizer, args)
 
-def main():
+def main(): 
     args = docopt(__doc__)
     
     # seed the random number generators
@@ -248,7 +286,7 @@ def main():
     np.random.seed(seed * 13 // 7)
 
     if args['--qtest']:
-        qtest()
+        qtest(args)
     else: 
         train(args)
 
