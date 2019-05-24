@@ -26,7 +26,7 @@ Options:
     --dropout=<float>                       dropout [default: 0.3]
     --n-words=<int>                         number of words in language model [default: 2000]
     --max-sent-len=<int>                    max sentence length to encode  [default: 10000]
-    --n-heads=<int>                         n of parralel attention layers in MHA [default: 3]
+    --n-heads=<int>                         n of parralel attention layers in MHA [default: 2]
     --n-layers=<int>                        n of transfomer layers stacked [default: 3]
 
 """
@@ -154,7 +154,7 @@ def train(args):
     test_df = pd.read_csv('test.csv')
     train_df = pd.read_csv('train.csv')
     # train on longer lengths 
-    train_df = train_df[train_df.file_length > 200]
+    train_df = train_df[train_df.file_length > 200][:100]
 
     if args['--load']:
         model, optimizer, lang = load('model_saves/' + args['--load-from'])
@@ -175,9 +175,16 @@ def train(args):
                                       num_layers=n_layers,
                                       dropout=float(args['--dropout']),
                                       n_classes=1)
+        def weights_init(m):
+            nn.init.xavier_uniform_(m.weight.data)
+            nn.init.xavier_uniform_(m.bias.data)
+        model.apply(weights_init)
 
-        for p in model.parameters():
-            assert p.requires_grad == True
+        # # init weights 
+        # for p in model.parameters():
+        #     assert p.requires_grad == True
+        #     if p.dim() > 1:
+        #         nn.init.xavier_uniform_(p)
         print('model param check')
 
         model = model.to(device)
@@ -194,7 +201,7 @@ def train(args):
     absolute_train_time = 0
 
     try:
-        model.train()
+        # model.train()
         for e in range(epochs):
             epoch_loss = train_iter = val_acc = val_loss = 0
             begin_time = time.time()
@@ -218,7 +225,7 @@ def train(args):
 
                 # perform validation
                 if train_iter > int(args['--valid-niter']) and train_iter % valid_niter == 0:
-                    model.eval()
+                    # model.eval()
                     threshold = torch.tensor([0.5])
                     n_examples = n_correct = val_loss = 0
 

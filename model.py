@@ -29,17 +29,13 @@ class TransformerClassifier(nn.Module):
         
         self.classify = nn.Linear(embed_dim, n_classes)
         
-        # init weights 
-        for p in self.parameters():
-            if p.dim() > 1:
-                nn.init.xavier_uniform_(p)
-        
                                       
     def forward(self, x):
         h, x_len = self.encoder(x, self.lang, self.device)
+        print(h)
         
         # Create masks for attention to only look left 
-        attn_mask = torch.full((x_len, x_len), -float('Inf'), device=h.device, dtype=h.dtype)
+        attn_mask = torch.full((x_len, x_len), -float('Inf'), device=self.device, dtype=h.dtype)
         attn_mask = torch.triu(attn_mask, diagonal=1)
         
         # Through the layers we go
