@@ -274,19 +274,19 @@ def train(args):
 
                 if args['--qtest'] and train_iter > 5: break
     finally:
+        if e > 8:
+            metrics = {'train_loss':loss_m,
+                    'train_acc': accuracy_m,
+                    'val_loss': val_loss_m,
+                    'val_acc': val_accuracy_m,
+                    'total_time': round(time.time() - absolute_start_time, 4),
+                    'train_time': round(absolute_train_time, 4)}
+            pp = pprint.PrettyPrinter(indent=4)
+            pp.pprint(metrics)
 
-        metrics = {'train_loss':loss_m,
-                'train_acc': accuracy_m,
-                'val_loss': val_loss_m,
-                'val_acc': val_accuracy_m,
-                'total_time': round(time.time() - absolute_start_time, 4),
-                'train_time': round(absolute_train_time, 4)}
-        pp = pprint.PrettyPrinter(indent=4)
-        pp.pprint(metrics)
-
-        end = 'cancel' if e != (epochs-1) else 'complete'
-        prefix = 'e={}_itr={}_{}_'.format(e, train_iter, end)
-        save(prefix + model_save_path, metrics, model, optimizer, args)
+            end = 'cancel' if e != (epochs-1) else 'complete'
+            prefix = 'e={}_itr={}_{}_'.format(e, train_iter, end)
+            save(prefix + model_save_path, metrics, model, optimizer, args)
 
 def main(): 
     args = docopt(__doc__)
