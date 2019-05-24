@@ -176,6 +176,10 @@ def train(args):
                                       dropout=float(args['--dropout']),
                                       n_classes=1)
 
+        for p in model.parameters():
+            assert p.requires_grad == True
+        print('model param check')
+
         model = model.to(device)
         optimizer = torch.optim.Adam(model.parameters(), lr=float(args['--lr']))
 
