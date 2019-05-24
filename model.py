@@ -1,45 +1,89 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 from utils import to_input_tensor
 
-class SentModel(nn.Module):
-    def __init__(self, embed_size, hidden_size, lang, device):
-        super(SentModel, self).__init__()
+# Thanks to, 
+# https://twitter.com/Thom_Wolf/status/1129658539142766592
+# AND using the Transformer as Classifier Thanks To, 
+# https://www.aclweb.org/anthology/W18-5429
+class TransformerClassifier(nn.Module):
+    def __init__(self, lang, device, embed_dim, hidden_dim, num_embed, num_pos, num_heads, num_layers, dropout, n_classes):
+        super().__init__()
         self.device = device
-        self.embed_size = embed_size
-        self.hidden_size = hidden_size
         self.lang = lang
-        self.embed = nn.Embedding(len(lang.word2id), embed_size, padding_idx=lang.word2id['<pad>'])
-        self.gru = nn.GRU(embed_size, hidden_size, bias=True)
-        self.l1 = nn.Linear(hidden_size, 1)
         
-    def forward(self, sents):
-        s_tensor, lengths = to_input_tensor(self.lang, sents, self.device)
-        emb = self.embed(s_tensor)
+        self.encoder = TransformerEmbedder(embed_dim, num_embed, num_pos, dropout)
+        self.dropout = nn.Dropout(dropout)
         
-        # pack + rnn sequence + unpack
-        x = nn.utils.rnn.pack_padded_sequence(emb, lengths)
-        output, hidden = self.gru(x)
-        output, _ = nn.utils.rnn.pad_packed_sequence(output)
+        self.attentions, self.feed_forwards = nn.ModuleList(), nn.ModuleList()
+        self.ln_1, self.ln_2 = nn.ModuleList(), nn.ModuleList()
+        for _ in range(num_layers):
+            self.attentions.append(nn.MultiheadAttention(embed_dim, num_heads, dropout=dropout))
+            self.feed_forwards.append(nn.Sequential(nn.Linear(embed_dim, hidden_dim),
+                                                    nn.ReLU(), 
+                                                    nn.Linear(hidden_dim, embed_dim)))
+            self.ln_1.append(nn.LayerNorm(embed_dim, eps=1e-12))
+            self.ln_2.append(nn.LayerNorm(embed_dim, eps=1e-12))
         
-        # batch_size, seq_len, hidden_size
-        output_batch = output.transpose(0, 1)
+        self.classify = nn.Linear(embed_dim, n_classes)
         
-        # batch_size, hidden_size
-        out_avg = output_batch.sum(dim=1)
+        # init weights 
+        for p in self.parameters():
+            if p.dim() > 1:
+                nn.init.xavier_uniform_(p)
         
-        # batch_size, 1
-        linear_out = self.l1(out_avg)
-        out = torch.sigmoid(linear_out).squeeze(-1)
+                                      
+    def forward(self, x):
+        h, x_len = self.encoder(x, self.lang, self.device)
         
-        return out
-    
-    def save(self, path):
+        # Create masks for attention to only look left 
+        attn_mask = torch.full((x_len, x_len), -float('Inf'), device=h.device, dtype=h.dtype)
+        attn_mask = torch.triu(attn_mask, diagonal=1)
+        
+        # Through the layers we go
+        for layer_norm1, attention, layer_norm2, feed_forward in zip(self.ln_1, self.attentions,
+                                                                     self.ln_2, self.feed_forwards):
+            h = layer_norm1(h)
+            x, w = attention(h, h, h, attn_mask=attn_mask)
+            x = self.dropout(x)
+            h = x + h 
+            
+            h = layer_norm2(h)
+            x = feed_forward(h)
+            x = self.dropout(x)
+            h = x + h
+            
+        # bs, sent_len, embed_dim
+        h = h.transpose(0, 1)
+        x, _ = torch.max(h, 1)
+        y = F.softmax(self.classify(x), dim=-1).squeeze(-1)
+        
+        return y
+
+    def save(self, path, args):
         params = {
-            'args': dict(embed_size=self.embed_size, hidden_size=self.hidden_size),
+            'args': args,
             'vocab': self.lang,
             'state_dict': self.state_dict()
         }
-
         torch.save(params, path)
+
+# seperate module to make attention analysis easy
+class TransformerEmbedder(nn.Module):
+    def __init__(self, embed_dim, num_embed, num_pos, dropout):
+        super().__init__()
+        self.token_embeddings = nn.Embedding(num_embed, embed_dim)
+        # Lazy positional embeddings
+        self.pos_embeddings = nn.Embedding(num_pos, embed_dim)
+        self.dropout = nn.Dropout(dropout)
+    
+    def forward(self, x, lang, device):
+        x, _ = to_input_tensor(lang, x, device)
+        positions = torch.arange(len(x), device=x.device).unsqueeze(-1)
+        h = self.token_embeddings(x)
+        h = h + self.pos_embeddings(positions).expand_as(h)
+        h = self.dropout(h)
+        
+        return h, len(x)
