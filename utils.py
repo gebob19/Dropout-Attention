@@ -32,3 +32,12 @@ def pad_sents(sents, pad_token):
         return s
     sents_padded = [pad(s) for s in sents]
     return sents_padded
+
+def clip_sents(sents):
+    min_seq = min(map(len, sents))
+    def clip(s):
+        if len(s) > min_seq:
+            s = s[:min_seq]
+        return s
+    sents_clipped = [clip(s) for s in sents]
+    return sents_clipped
