@@ -58,9 +58,8 @@ class TransformerClassifier(nn.Module):
         y = torch.sigmoid(self.classify(x)).squeeze(-1)
         return y
 
-    def save(self, path, args):
+    def save(self, path):
         params = {
-            'args': args,
             'vocab': self.lang,
             'state_dict': self.state_dict()
         }

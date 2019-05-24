@@ -19,8 +19,8 @@ Options:
     --validate-every=<int>                  validate every [default: 10]
     --max-epoch=<int>                       max epoch [default: 30]
     --lr=<float>                            learning rate [default: 0.001]
-    --save-to=<file>                        model save path [default: model.bin]
-    --load-from=<file>                      model load path [default: model.bin]
+    --save-to=<file>                        model save path [default: default-model]
+    --load-from=<file>                      model load path [default: default-model]
     --valid-niter=<int>                     perform validation after how many iterations [default: 500]
     --n-valid=<int>                         number of samples to validate on [default: 10000]
     --dropout=<float>                       dropout [default: 0.3]
@@ -36,6 +36,7 @@ import math
 import torch
 import time
 import pprint
+import os
 
 import pandas as pd
 import numpy as np
@@ -82,21 +83,24 @@ def accuracy(preds, targets, threshold=torch.tensor([0.5], device=device)):
     return n_correct, n_examples
 
 def load(path, cpu=False):
-    if cpu:
-        model_checkpoint = torch.load(path, map_location=lambda storage, loc: storage)
-        optim_checkpoint =  torch.load(path+'.optim', map_location=lambda storage, loc: storage)
-    else:
-        model_checkpoint = torch.load(path)
-        optim_checkpoint =  torch.load(path+'.optim')
+    model_dir = 'model_saves/' + path
 
+    if cpu:
+        model_checkpoint = torch.load(model_dir + '/model.bin', map_location=lambda storage, loc: storage)
+        optim_checkpoint =  torch.load(model_dir + '/optimizer.pt', map_location=lambda storage, loc: storage)
+    else:
+        model_checkpoint = torch.load(model_dir + '/model.bin')
+        optim_checkpoint =  torch.load(model_dir + '/optimizer.pt')
+
+    metrics = torch.load(model_dir + '/metrics.pt')
     vocab = model_checkpoint['vocab']
 
-    n_heads =           int(model_checkpoint['args']['--n-heads'])
-    n_layers =          int(model_checkpoint['args']['--n-layers'])
-    embed_size =        int(model_checkpoint['args']['--embed-size'])
-    hidden_size =       int(model_checkpoint['args']['--hidden-size'])
-    max_sentence_len =  int(model_checkpoint['args']['--max-sent-len'])
-    dropout =  float(model_checkpoint['args']['--dropout'])
+    n_heads =           int(metrics['args']['--n-heads'])
+    n_layers =          int(metrics['args']['--n-layers'])
+    embed_size =        int(metrics['args']['--embed-size'])
+    hidden_size =       int(metrics['args']['--hidden-size'])
+    max_sentence_len =  int(metrics['args']['--max-sent-len'])
+    dropout =  float(metrics['args']['--dropout'])
 
     model = TransformerClassifier(lang=vocab, 
                                     device=device,
@@ -113,15 +117,21 @@ def load(path, cpu=False):
     model.load_state_dict(model_checkpoint['state_dict'])
     optimizer.load_state_dict(optim_checkpoint)
 
-    return model, optimizer, vocab
+    return model, optimizer, vocab, metrics
 
-def save(model_save_path, metrics, model, optimizer, args):
+def save(model_save_path, metrics, model, optimizer):
+
     # save metrics
-    torch.save(metrics, 'metric_saves/' + model_save_path + '.metrics')
-
+    model_dir = 'model_saves/' + model_save_path
+    if not os.path.exists(model_dir):
+        os.mkdir(model_dir)
+    else:
+        print('Overwritting...')
+    
+    torch.save(metrics, model_dir + '/metrics.pt')
     # save model + optimizer
-    model.save('model_saves/' + model_save_path, args)
-    torch.save(optimizer.state_dict(), 'model_saves/' + model_save_path + '.optim')
+    model.save(model_dir + '/model.bin')
+    torch.save(optimizer.state_dict(), model_dir + '/optimizer.pt')
 
     print('Model saved.')
 
@@ -138,9 +148,9 @@ def qtest(args):
     args['--log-every'] = '1'
     args['--validate-every'] = '1'
     args['--n-valid'] = '8'
-    args['--valid-niter'] = '10'
+    args['--valid-niter'] = '3'
     
-    args['--save-to'] = 'quick_test_model.bin'
+    args['--save-to'] = 'quick_test_model'
 
     train(args)
 
@@ -202,10 +212,19 @@ def train(args):
     # metric tracking 
     loss_m = []
     accuracy_m = []
-    val_loss_m = []
-    val_accuracy_m = []
+    val_loss_m = [0]
+    val_accuracy_m = [0]
     absolute_start_time = time.time()
     absolute_train_time = 0
+
+    def get_metrics():
+        return {'train_loss':loss_m,
+                'train_acc': accuracy_m,
+                'val_loss': val_loss_m,
+                'val_acc': val_accuracy_m,
+                'total_time': round(time.time() - absolute_start_time, 4),
+                'train_time': round(absolute_train_time, 4),
+                'args': args}
 
     try:
         model.train()
@@ -254,9 +273,7 @@ def train(args):
 
                     if is_better: 
                         print('save currently the best model to [%s]' % model_save_path, file=sys.stderr)
-                        model.save(model_save_path, args)
-                        # also save the optimizers' state
-                        torch.save(optimizer.state_dict(), 'model_saves/' + model_save_path + '.optim')
+                        save(model_save_path, get_metrics(), model, optimizer)
 
                 if train_iter % int(args['--log-every']) == 0:
                     # track metrics
@@ -266,7 +283,7 @@ def train(args):
                     torch.cuda.empty_cache()
 
                     print(('epoch %d, train itr %d, avg. loss %.2f, '
-                            'train accuracy: %.2f, val loss %.2f, val acc %.2f'
+                            'train accuracy: %.2f, val loss %.2f, val acc %.2f '
                             'time elapsed %.2f sec') % (e, train_iter,
                             epoch_loss / train_iter, accuracy_m[-1],
                             val_loss_m[-1], val_accuracy_m[-1],
@@ -275,18 +292,13 @@ def train(args):
                 if args['--qtest'] and train_iter > 5: break
     finally:
         if e > 8 or absolute_train_time > 60 * 5:
-            metrics = {'train_loss':loss_m,
-                    'train_acc': accuracy_m,
-                    'val_loss': val_loss_m,
-                    'val_acc': val_accuracy_m,
-                    'total_time': round(time.time() - absolute_start_time, 4),
-                    'train_time': round(absolute_train_time, 4)}
+            metrics = get_metrics()
             pp = pprint.PrettyPrinter(indent=4)
             pp.pprint(metrics)
 
             end = 'cancel' if e != (epochs-1) else 'complete'
             prefix = 'e={}_itr={}_{}_'.format(e, train_iter, end)
-            save(prefix + model_save_path, metrics, model, optimizer, args)
+            save(prefix + model_save_path, metrics, model, optimizer)
 
 def main(): 
     args = docopt(__doc__)
