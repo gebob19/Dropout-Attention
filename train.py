@@ -81,8 +81,14 @@ def accuracy(preds, targets, threshold=torch.tensor([0.5], device=device)):
     n_examples = len(targets)
     return n_correct, n_examples
 
-def load(path):
-    model_checkpoint = torch.load(path)
+def load(path, cpu=False):
+    if cpu:
+        model_checkpoint = torch.load(path, map_location=lambda storage, loc: storage)
+        optim_checkpoint =  torch.load(path+'.optim', map_location=lambda storage, loc: storage)
+    else:
+        model_checkpoint = torch.load(path)
+        optim_checkpoint =  torch.load(path+'.optim')
+
     vocab = model_checkpoint['vocab']
 
     n_heads =           int(model_checkpoint['args']['--n-heads'])
@@ -105,7 +111,7 @@ def load(path):
     optimizer = torch.optim.Adam(model.parameters())
     
     model.load_state_dict(model_checkpoint['state_dict'])
-    optimizer.load_state_dict(torch.load(path+'.optim'))
+    optimizer.load_state_dict(optim_checkpoint)
 
     return model, optimizer, vocab
 
@@ -246,13 +252,6 @@ def train(args):
                     val_loss_m.append(round(val_loss / n_examples, 4))
                     val_accuracy_m.append(val_acc.item())
 
-                    print(('epoch %d, train itr %d, avg. loss %.2f, '
-                            'val_acc: %.2f, val_loss: %.2f, '
-                            'time elapsed %.2f sec') % (e, train_iter,
-                            epoch_loss / train_iter, val_acc, val_loss,
-                            time.time() - begin_time), file=sys.stderr)
-                    begin_time = time.time()
-
                     if is_better: 
                         print('save currently the best model to [%s]' % model_save_path, file=sys.stderr)
                         model.save(model_save_path, args)
@@ -267,14 +266,15 @@ def train(args):
                     torch.cuda.empty_cache()
 
                     print(('epoch %d, train itr %d, avg. loss %.2f, '
-                            'train accuracy: %.2f, '
+                            'train accuracy: %.2f, val loss %.2f, val acc %.2f'
                             'time elapsed %.2f sec') % (e, train_iter,
                             epoch_loss / train_iter, accuracy_m[-1],
+                            val_loss_m[-1], val_accuracy_m[-1],
                             time.time() - begin_time), file=sys.stderr)
 
                 if args['--qtest'] and train_iter > 5: break
     finally:
-        if e > 8:
+        if e > 8 or absolute_train_time > 60 * 5:
             metrics = {'train_loss':loss_m,
                     'train_acc': accuracy_m,
                     'val_loss': val_loss_m,
