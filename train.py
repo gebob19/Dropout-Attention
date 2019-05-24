@@ -121,16 +121,16 @@ def save(model_save_path, metrics, model, optimizer, args):
 
 
 def qtest(args):
-    args['--batch-size'] = '8'
-    args['--embed-size'] = '20'
-    args['--hidden-size'] = '20'
-    args['--n-heads'] = '1'
-    args['--n-layers'] =  '1'
+    args['--batch-size'] = '32'
+    args['--embed-size'] = '100'
+    args['--hidden-size'] = '100'
+    args['--n-heads'] = '2'
+    args['--n-layers'] =  '2'
 
-    args['--n-words'] = '1000'
+    args['--n-words'] = '10000'
     
-    args['--log-every'] = '5'
-    args['--validate-every'] = '5'
+    args['--log-every'] = '1'
+    args['--validate-every'] = '1'
     args['--n-valid'] = '8'
     args['--valid-niter'] = '10'
     
@@ -154,7 +154,7 @@ def train(args):
     test_df = pd.read_csv('test.csv')
     train_df = pd.read_csv('train.csv')
     # train on longer lengths 
-    train_df = train_df[train_df.file_length > 200][:100]
+    # train_df = train_df[train_df.file_length > 200][:100]
 
     if args['--load']:
         model, optimizer, lang = load('model_saves/' + args['--load-from'])
@@ -175,16 +175,17 @@ def train(args):
                                       num_layers=n_layers,
                                       dropout=float(args['--dropout']),
                                       n_classes=1)
-        def weights_init(m):
-            nn.init.xavier_uniform_(m.weight.data)
-            nn.init.xavier_uniform_(m.bias.data)
-        model.apply(weights_init)
-
-        # # init weights 
-        # for p in model.parameters():
-        #     assert p.requires_grad == True
-        #     if p.dim() > 1:
-        #         nn.init.xavier_uniform_(p)
+        # def weights_init(m):
+        #     classname = m.__class__.__name__
+        #     if classname.find('Linear') != -1:
+        #         nn.init.xavier_uniform_(m.weight.data)
+        #         nn.init.xavier_uniform_(m.bias.data)
+# 
+        # init weights 
+        for p in model.parameters():
+            assert p.requires_grad == True
+            if p.dim() > 1:
+                nn.init.xavier_uniform_(p)
         print('model param check')
 
         model = model.to(device)
