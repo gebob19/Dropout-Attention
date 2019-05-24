@@ -224,7 +224,7 @@ def train(args):
                 absolute_train_time += time.time() - start_train_time
 
                 # perform validation
-                if train_iter > int(args['--valid-niter']) and train_iter % valid_niter == 0:
+                if (e > 1 or train_iter > int(args['--valid-niter'])) and train_iter % valid_niter == 0:
                     model.eval()
                     threshold = torch.tensor([0.5])
                     n_examples = n_correct = val_loss = 0
