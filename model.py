@@ -32,7 +32,6 @@ class TransformerClassifier(nn.Module):
                                       
     def forward(self, x):
         h, x_len = self.encoder(x, self.lang, self.device)
-        # print(h)
         
         # Create masks for attention to only look left 
         attn_mask = torch.full((x_len, x_len), -float('Inf'), device=self.device, dtype=h.dtype)
@@ -45,7 +44,7 @@ class TransformerClassifier(nn.Module):
             x, w = attention(h, h, h, attn_mask=attn_mask)
             x = self.dropout(x)
             h = x + h 
-            
+
             h = layer_norm2(h)
             x = feed_forward(h)
             x = self.dropout(x)
@@ -54,8 +53,7 @@ class TransformerClassifier(nn.Module):
         # bs, sent_len, embed_dim
         h = h.transpose(0, 1)
         x, _ = torch.max(h, 1)
-        y = F.softmax(self.classify(x), dim=-1).squeeze(-1)
-        
+        y = torch.sigmoid(self.classify(x)).squeeze(-1)
         return y
 
     def save(self, path, args):

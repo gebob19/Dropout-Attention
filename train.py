@@ -186,7 +186,7 @@ def train(args):
             assert p.requires_grad == True
             if p.dim() > 1:
                 nn.init.xavier_uniform_(p)
-        print('model param check')
+        # print('model param check')
 
         model = model.to(device)
         optimizer = torch.optim.Adam(model.parameters(), lr=float(args['--lr']))
@@ -202,18 +202,17 @@ def train(args):
     absolute_train_time = 0
 
     try:
-        # model.train()
+        model.train()
         for e in range(epochs):
             epoch_loss = train_iter = val_acc = val_loss = 0
             begin_time = time.time()
             
             # train
             for sents, targets in batch_iter(lang, train_df, train_batch_size, shuffle=True):
-                # print('training...{} - {}'.format(train_iter, valid_niter))
                 start_train_time = time.time()
                 train_iter += 1 
                 optimizer.zero_grad()
-            
+                
                 preds = model(sents)
                 loss = loss_fcn(preds, targets)
                 epoch_loss += loss.item()
@@ -226,7 +225,7 @@ def train(args):
 
                 # perform validation
                 if train_iter > int(args['--valid-niter']) and train_iter % valid_niter == 0:
-                    # model.eval()
+                    model.eval()
                     threshold = torch.tensor([0.5])
                     n_examples = n_correct = val_loss = 0
 
