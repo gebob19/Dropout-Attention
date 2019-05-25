@@ -172,6 +172,7 @@ def train(args):
     train_df = pd.read_csv('train.csv')
     # train on longer lengths 
     train_df = train_df[train_df.file_length > 200]
+    test_df = test_df[test_df.file_length > 200]
 
     if args['--load']:
         model, optimizer, lang = load('model_saves/' + args['--load-from'])
