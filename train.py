@@ -10,8 +10,9 @@ Options:
     -h --help                               show this screen.
     --qtest                                 quick test mode
     --load                                  load model flag
+    --save                                  save model flag 
     --seed=<int>                            seed [default: 0]
-    --batch-size=<int>                      batch size [default: 32]
+    --batch-size=<int>                      batch size [default: 128]
     --embed-size=<int>                      embedding size [default: 256]
     --hidden-size=<int>                     hidden size [default: 256]
     --clip-grad=<float>                     gradient clipping [default: 5.0]
@@ -272,8 +273,11 @@ def train(args):
                     val_accuracy_m.append(val_acc.item())
 
                     if is_better: 
-                        print('save currently the best model to [%s]' % model_save_path, file=sys.stderr)
-                        save(model_save_path, get_metrics(), model, optimizer)
+                        if args['--save']:
+                            print('save currently the best model to [%s]' % model_save_path, file=sys.stderr)
+                            save(model_save_path, get_metrics(), model, optimizer)
+                        else:
+                            print("Saving not enabeled...")
 
                 if train_iter % int(args['--log-every']) == 0:
                     # track metrics
@@ -291,7 +295,7 @@ def train(args):
 
                 if args['--qtest'] and train_iter > 5: break
     finally:
-        if e > 8 or absolute_train_time > 60 * 5:
+        if args['--save']: and e > 8 or absolute_train_time > 60 * 5:
             metrics = get_metrics()
             pp = pprint.PrettyPrinter(indent=4)
             pp.pprint(metrics)
