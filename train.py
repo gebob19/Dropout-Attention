@@ -193,18 +193,11 @@ def train(args):
                                       num_layers=n_layers,
                                       dropout=float(args['--dropout']),
                                       n_classes=1)
-        # def weights_init(m):
-        #     classname = m.__class__.__name__
-        #     if classname.find('Linear') != -1:
-        #         nn.init.xavier_uniform_(m.weight.data)
-        #         nn.init.xavier_uniform_(m.bias.data)
-# 
         # init weights 
         for p in model.parameters():
             assert p.requires_grad == True
             if p.dim() > 1:
                 nn.init.xavier_uniform_(p)
-        # print('model param check')
 
         model = model.to(device)
         optimizer = torch.optim.Adam(model.parameters(), lr=float(args['--lr']))
