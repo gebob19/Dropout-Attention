@@ -295,7 +295,7 @@ def train(args):
 
                 if args['--qtest'] and train_iter > 5: break
     finally:
-        if args['--save']: and e > 8 or absolute_train_time > 60 * 5:
+        if args['--save'] and e > 8 or absolute_train_time > 60 * 5:
             metrics = get_metrics()
             pp = pprint.PrettyPrinter(indent=4)
             pp.pprint(metrics)
