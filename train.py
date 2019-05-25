@@ -17,7 +17,7 @@ Options:
     --hidden-size=<int>                     hidden size [default: 256]
     --clip-grad=<float>                     gradient clipping [default: 5.0]
     --log-every=<int>                       log every [default: 10]
-    --validate-every=<int>                  validate every [default: 10]
+    --validate-every=<int>                  validate every [default: 40]
     --max-epoch=<int>                       max epoch [default: 30]
     --lr=<float>                            learning rate [default: 0.001]
     --save-to=<file>                        model save path [default: default-model]
@@ -295,7 +295,7 @@ def train(args):
 
                 if args['--qtest'] and train_iter > 5: break
     finally:
-        if args['--save'] and e > 8 or absolute_train_time > 60 * 5:
+        if args['--save']:
             metrics = get_metrics()
             pp = pprint.PrettyPrinter(indent=4)
             pp.pprint(metrics)
