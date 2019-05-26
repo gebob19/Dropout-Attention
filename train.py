@@ -48,7 +48,7 @@ from tqdm import tqdm
 from torch import optim
 from pathlib import Path
 from docopt import docopt
-
+ 
 from model import TransformerClassifier
 from utils import prepare_df, clip_sents
 from language_structure import load_model, Lang
