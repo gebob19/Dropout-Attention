@@ -36,8 +36,8 @@ class TransformerClassifier(nn.Module):
         h, x_len = self.encoder(x, self.lang, self.device)
         
         # Create masks for attention to only look left 
-        # attn_mask = torch.full((x_len, x_len), -float('Inf'), device=self.device, dtype=h.dtype)
-        # attn_mask = torch.triu(attn_mask, diagonal=1)
+        attn_mask = torch.full((x_len, x_len), -float('Inf'), device=self.device, dtype=h.dtype)
+        attn_mask = torch.triu(attn_mask, diagonal=1)
         
         # Through the layers we go
         for layer_norm1, attention, layer_norm2, feed_forward in zip(self.ln_1, self.attentions,

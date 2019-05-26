@@ -25,7 +25,7 @@ Options:
     --valid-niter=<int>                     perform validation after how many iterations [default: 500]
     --n-valid=<int>                         number of samples to validate on [default: 10000]
     --dropout=<float>                       dropout [default: 0.3]
-    --n-words=<int>                         number of words in language model [default: 2000]
+    --n-words=<int>                         number of words in language model [default: 10000]
     --max-sent-len=<int>                    max sentence length to encode  [default: 10000]
     --n-heads=<int>                         n of parralel attention layers in MHA [default: 2]
     --n-layers=<int>                        n of transfomer layers stacked [default: 3]
@@ -198,6 +198,7 @@ def train(args):
             assert p.requires_grad == True
             if p.dim() > 1:
                 nn.init.xavier_uniform_(p)
+        # print('model param check')
 
         model = model.to(device)
         optimizer = torch.optim.Adam(model.parameters(), lr=float(args['--lr']))
