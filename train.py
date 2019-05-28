@@ -153,7 +153,7 @@ def qtest(args):
 
     args['--n-words'] = '10000'
     
-    args['--log-every'] = '20'
+    args['--log-every'] = '2'
     args['--validate-every'] = '1'
     args['--n-valid'] = '8'
     args['--valid-niter'] = '3'
@@ -286,7 +286,7 @@ def train(args):
                     val_loss = val_loss / n_examples
 
                     is_better = len(val_accuracy_m) == 0 or val_acc > max(val_accuracy_m)
-                    val_loss_m.append(round(val_loss / n_examples, 4))
+                    val_loss_m.append(round(val_loss / n_examples, 5))
                     val_accuracy_m.append(val_acc.item())
 
                     if is_better: 
