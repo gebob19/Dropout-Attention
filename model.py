@@ -67,7 +67,7 @@ class RNNAttention(nn.Module):
         attn = torch.bmm(x, x.transpose(1, 2))
         inf = torch.tensor(float("inf")).to(device)
         attn_bytes = attn_mask.byte().to(device)
-        print(attn_bytes.shape, attn.shape)
+        
         attn.data.masked_fill_(attn_bytes, -inf)
         attn = torch.softmax(attn, dim=2)
         # account for padding 
