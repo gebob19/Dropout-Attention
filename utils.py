@@ -10,7 +10,7 @@ def to_input_tensor(lang, sents, device):
     return torch.t(sents_var), lengths
 
 def indexesFromSentence(lang, sentence):
-    return [lang.word2id['<s>']] + [lang.get_id(word) for word in sentence] + [lang.word2id['</s>']]
+    return [lang.get_id(word) for word in sentence]
 
 # open + clean all examles in a dataframe
 def prepare_df(lang, df, base):

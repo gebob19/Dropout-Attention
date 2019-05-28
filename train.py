@@ -49,7 +49,7 @@ from torch import optim
 from pathlib import Path
 from docopt import docopt
  
-from model import TransformerClassifier
+from model import TransformerClassifier, RNN_Self_Attention_Classifier
 from utils import prepare_df, clip_sents
 from language_structure import load_model, Lang
 
@@ -70,9 +70,6 @@ def batch_iter(lang, data, batch_size, shuffle=False):
         results = prepare_df(lang, batch_df, base)
         results = sorted(results, key=lambda e: len(e[0].split(' ')), reverse=True)
         sents, targets = [e[0].split(' ') for e in results], [e[1] for e in results]
-
-        # fast and easy clip to minimum length so no padding needed
-        sents = clip_sents(sents)
         
         yield sents, torch.tensor(targets, dtype=torch.float32, device=device)
 
@@ -94,31 +91,38 @@ def load(path, cpu=False):
         optim_checkpoint =  torch.load(model_dir + '/optimizer.pt')
 
     metrics = torch.load(model_dir + '/metrics.pt')
-    vocab = model_checkpoint['vocab']
+    lang = model_checkpoint['vocab']
 
     n_heads =           int(metrics['args']['--n-heads'])
     n_layers =          int(metrics['args']['--n-layers'])
     embed_size =        int(metrics['args']['--embed-size'])
     hidden_size =       int(metrics['args']['--hidden-size'])
     max_sentence_len =  int(metrics['args']['--max-sent-len'])
+    train_batch_size =  int(metrics['args']['--batch-size'])
     dropout =  float(metrics['args']['--dropout'])
 
-    model = TransformerClassifier(lang=vocab, 
-                                    device=device,
-                                    embed_dim=embed_size, 
-                                    hidden_dim=hidden_size,
-                                    num_embed=vocab.n_words,
-                                    num_pos=max_sentence_len, 
-                                    num_heads=n_heads,
-                                    num_layers=n_layers,
-                                    dropout=dropout,
-                                    n_classes=1)
+    # model = TransformerClassifier(lang=lang, 
+    #                                 device=device,
+    #                                 embed_dim=embed_size, 
+    #                                 hidden_dim=hidden_size,
+    #                                 num_embed=lang.n_words,
+    #                                 num_pos=max_sentence_len, 
+    #                                 num_heads=n_heads,
+    #                                 num_layers=n_layers,
+    #                                 dropout=dropout,
+    #                                 n_classes=1)
+    model = RNN_Self_Attention_Classifier(language=lang, device=device,
+                                      batch_size=train_batch_size,
+                                      embed_dim=embed_size, 
+                                      hidden_dim=hidden_size,
+                                      num_embed=lang.n_words,
+                                      n_classes=1)
     optimizer = torch.optim.Adam(model.parameters())
     
     model.load_state_dict(model_checkpoint['state_dict'])
     optimizer.load_state_dict(optim_checkpoint)
 
-    return model, optimizer, vocab, metrics
+    return model, optimizer, lang, metrics
 
 def save(model_save_path, metrics, model, optimizer):
 
@@ -138,7 +142,7 @@ def save(model_save_path, metrics, model, optimizer):
 
 
 def qtest(args):
-    args['--batch-size'] = '32'
+    args['--batch-size'] = '2'
     args['--embed-size'] = '100'
     args['--hidden-size'] = '100'
     args['--n-heads'] = '2'
@@ -157,6 +161,7 @@ def qtest(args):
 
 
 def train(args):
+    torch.autograd.set_detect_anomaly(True)
     n_words =           int(args['--n-words'])
     valid_niter =       int(args['--validate-every'])
     model_save_path =   args['--save-to']
@@ -175,7 +180,7 @@ def train(args):
     test_df = test_df[test_df.file_length > 200]
 
     if args['--load']:
-        model, optimizer, lang = load('model_saves/' + args['--load-from'])
+        model, optimizer, lang, metrics = load(args['--load-from'])
         print('model loaded...')
     else: 
         lang = load_model()
@@ -184,14 +189,20 @@ def train(args):
         hidden_size = int(args['--hidden-size'])
         embed_size = int(args['--embed-size'])
 
-        model = TransformerClassifier(lang=lang, device=device,
+        # model = TransformerClassifier(lang=lang, device=device,
+        #                               embed_dim=embed_size, 
+        #                               hidden_dim=hidden_size,
+        #                               num_embed=lang.n_words,
+        #                               num_pos=max_sentence_len, 
+        #                               num_heads=n_heads,
+        #                               num_layers=n_layers,
+        #                               dropout=float(args['--dropout']),
+        #                               n_classes=1)
+        model = RNN_Self_Attention_Classifier(language=lang, device=device,
+                                      batch_size=train_batch_size,
                                       embed_dim=embed_size, 
                                       hidden_dim=hidden_size,
                                       num_embed=lang.n_words,
-                                      num_pos=max_sentence_len, 
-                                      num_heads=n_heads,
-                                      num_layers=n_layers,
-                                      dropout=float(args['--dropout']),
                                       n_classes=1)
         # init weights 
         for p in model.parameters():
