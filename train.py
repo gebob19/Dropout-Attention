@@ -241,6 +241,7 @@ def train(args):
             
             # train
             for sents, targets in batch_iter(lang, train_df, train_batch_size, shuffle=True):
+                torch.cuda.empty_cache()
                 start_train_time = time.time()
                 train_iter += 1 
                 optimizer.zero_grad()
@@ -300,7 +301,7 @@ def train(args):
                             time.time() - begin_time), file=sys.stderr)
 
                 if args['--qtest'] and train_iter > 5: break
-                torch.cuda.empty_cache()
+
     finally:
         if args['--save']:
             metrics = get_metrics()
