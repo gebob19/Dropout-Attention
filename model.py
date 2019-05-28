@@ -67,6 +67,7 @@ class RNNAttention(nn.Module):
         attn = torch.bmm(x, x.transpose(1, 2))
         inf = torch.tensor([float("inf")])
         inf.cuda()
+        print(inf.device, attn_mask.byte().device, attn.device)
         
         attn.data.masked_fill_(attn_mask.byte(), -inf)
         attn = torch.softmax(attn, dim=2)
