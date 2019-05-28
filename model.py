@@ -65,10 +65,8 @@ class RNNAttention(nn.Module):
     def forward(self, x, attn_mask, device):
         # apply attention over RNN outputs (batch, seq, hidden)
         attn = torch.bmm(x, x.transpose(1, 2))
-        inf = torch.tensor([float("inf")]).to(device)
+        inf = torch.tensor(float("inf")).to(device)
         attn_bytes = attn_mask.byte().to(device)
-
-        print(inf.device, attn_bytes.device, attn.device)
         
         attn.data.masked_fill_(attn_bytes, -inf)
         attn = torch.softmax(attn, dim=2)
