@@ -44,7 +44,7 @@ class RNN_Self_Attention_Classifier(SaveModel):
             attn_mask[i, :, l:] = 1
             attn_mask[i, l:, :] = 1
         
-        attn = self.attention(x, attn_mask)
+        attn = self.attention(x, attn_mask, self.device)
         attn_vec = attn.unsqueeze(-1) * x.unsqueeze(1)
         attn_vec = attn_vec.sum(-2)
         attn_out = torch.cat([attn_vec, x], dim=-1)
@@ -62,10 +62,11 @@ class RNNAttention(nn.Module):
     def __init__(self):
         super().__init__()
         
-    def forward(self, x, attn_mask):
+    def forward(self, x, attn_mask, device):
         # apply attention over RNN outputs (batch, seq, hidden)
         attn = torch.bmm(x, x.transpose(1, 2))
-        attn.data.masked_fill_(attn_mask.byte(), -float('inf'))
+        neg_inf = torch.tensor(-float("inf")).to(device)
+        attn.data.masked_fill_(attn_mask.byte(), neg_inf)
         attn = torch.softmax(attn, dim=2)
         # account for padding 
         attn.data.masked_fill_(attn_mask.byte(), 0)
