@@ -183,6 +183,7 @@ def train(args):
     test_df = test_df[test_df.file_length > 200]
     train_df = train_df[train_df.file_length < max_sentence_len]
     test_df = test_df[test_df.file_length < max_sentence_len]
+    print(len(train_df), len(test_df))
 
     if args['--load']:
         model, optimizer, lang, metrics = load(args['--load-from'])
@@ -224,6 +225,7 @@ def train(args):
     # metric tracking 
     loss_m = []
     accuracy_m = []
+    train_itrs = []
     val_loss_m = [0]
     val_accuracy_m = [0]
     absolute_start_time = time.time()
@@ -232,6 +234,7 @@ def train(args):
     def get_metrics():
         return {'train_loss':loss_m,
                 'train_acc': accuracy_m,
+                'train_iterations': train_itrs,
                 'val_loss': val_loss_m,
                 'val_acc': val_accuracy_m,
                 'total_time': round(time.time() - absolute_start_time, 4),
@@ -303,6 +306,7 @@ def train(args):
                     # track metrics
                     loss_m.append(round(loss.item() / len(targets), 4))
                     accuracy_m.append((total_correct.float() / total_examples).item())
+                    train_itrs.append(train_iter)
                     total_correct = total_examples = 0
 
                     print(('epoch %d, train itr %d, avg. loss %.2f, '
@@ -312,7 +316,7 @@ def train(args):
                             val_loss_m[-1], val_accuracy_m[-1],
                             time.time() - begin_time), file=sys.stderr)
 
-                if args['--qtest'] and train_iter > 50: break
+                # if args['--qtest'] and train_iter > 50: break
 
     finally:
         if args['--save']:
