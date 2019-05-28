@@ -291,7 +291,6 @@ def train(args):
                     loss_m.append(round(loss.item() / len(targets), 4))
                     n_correct, n_examples = accuracy(preds, targets)
                     accuracy_m.append((n_correct.float() / n_examples).item())
-                    torch.cuda.empty_cache()
 
                     print(('epoch %d, train itr %d, avg. loss %.2f, '
                             'train accuracy: %.2f, val loss %.2f, val acc %.2f '
@@ -301,6 +300,7 @@ def train(args):
                             time.time() - begin_time), file=sys.stderr)
 
                 if args['--qtest'] and train_iter > 5: break
+                torch.cuda.empty_cache()
     finally:
         if args['--save']:
             metrics = get_metrics()
