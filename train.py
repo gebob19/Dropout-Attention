@@ -250,6 +250,7 @@ def train(args):
             
             # train
             for sents, targets in batch_iter(lang, train_df, train_batch_size, shuffle=True):
+                print(sents)
                 torch.cuda.empty_cache()
                 start_train_time = time.time()
                 train_iter += 1 
