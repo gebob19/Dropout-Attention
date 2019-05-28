@@ -284,6 +284,7 @@ def train(args):
                             save(model_save_path, get_metrics(), model, optimizer)
                         else:
                             print("Saving not enabeled...")
+                    model.train()
 
                 if train_iter % int(args['--log-every']) == 0:
                     # track metrics
