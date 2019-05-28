@@ -63,6 +63,9 @@ def batch_iter(lang, data, batch_size, shuffle=False):
         data = data.sample(frac=1.)
     
     for i in range(batch_num):
+        # consistent batch sizes
+        if min((i + 1) * batch_size, len(data)) == len(data): break
+
         lb, ub = i * batch_size, min((i + 1) * batch_size, len(data))
         batch_df = data[lb:ub]
         
