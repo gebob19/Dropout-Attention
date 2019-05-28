@@ -32,7 +32,7 @@ class RNN_Self_Attention_Classifier(SaveModel):
         x, lengths = to_input_tensor(self.language, sents, self.device)
         x_embed = self.embedding(x)
         # RNN encoding
-        x = nn.utils.rnn.pack_padded_sequence(x_embed, lengths)
+        x = nn.utils.rnn.pack_padded_sequence(x_embed, lengths) 
         x, _ = self.gru(x)
         x, _ = nn.utils.rnn.pad_packed_sequence(x)
         
