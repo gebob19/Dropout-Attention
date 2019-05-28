@@ -153,7 +153,7 @@ def qtest(args):
 
     args['--n-words'] = '10000'
     
-    args['--log-every'] = '1'
+    args['--log-every'] = '20'
     args['--validate-every'] = '1'
     args['--n-valid'] = '8'
     args['--valid-niter'] = '3'
@@ -240,6 +240,7 @@ def train(args):
         model.train()
         for e in range(epochs):
             epoch_loss = train_iter = val_acc = val_loss = 0
+            total_correct = total_examples = 0
             begin_time = time.time()
             
             # train
@@ -252,6 +253,11 @@ def train(args):
                 preds = model(sents)
                 loss = loss_fcn(preds, targets)
                 epoch_loss += loss.item()
+                
+                # accuracy check 
+                n_correct, n_examples = accuracy(preds, targets)
+                total_correct += n_correct
+                total_examples += n_examples
             
                 loss.backward()
                 grad_norm = nn.utils.clip_grad_norm_(model.parameters(), clip_grad)
@@ -293,8 +299,8 @@ def train(args):
                 if train_iter % int(args['--log-every']) == 0:
                     # track metrics
                     loss_m.append(round(loss.item() / len(targets), 4))
-                    n_correct, n_examples = accuracy(preds, targets)
-                    accuracy_m.append((n_correct.float() / n_examples).item())
+                    accuracy_m.append((total_correct.float() / total_examples).item())
+                    total_correct = total_examples = 0
 
                     print(('epoch %d, train itr %d, avg. loss %.2f, '
                             'train accuracy: %.2f, val loss %.2f, val acc %.2f '
@@ -303,7 +309,7 @@ def train(args):
                             val_loss_m[-1], val_accuracy_m[-1],
                             time.time() - begin_time), file=sys.stderr)
 
-                if args['--qtest'] and train_iter > 5: break
+                if args['--qtest'] and train_iter > 50: break
 
     finally:
         if args['--save']:
