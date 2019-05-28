@@ -276,8 +276,9 @@ def train(args):
                         for val_sents, val_targets in batch_iter(lang, test_df[:n_valid], train_batch_size):
                             val_preds = model(val_sents)
                             batch_n_correct, batch_n_examples = accuracy(val_preds, val_targets)
+                            vloss = loss_fcn(val_preds, val_targets)
 
-                            val_loss += loss_fcn(val_preds, val_targets).item()
+                            val_loss += vloss.item()
                             n_correct += batch_n_correct
                             n_examples += batch_n_examples
 
