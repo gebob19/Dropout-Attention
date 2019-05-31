@@ -81,7 +81,7 @@ def batch_iter(lang, data, batch_size, shuffle=False):
 
 def accuracy(preds, targets, threshold=torch.tensor([0.5], device=device)):
     preds = (preds >= threshold).float()
-    n_correct = torch.eq(preds, targets).sum()
+    n_correct = torch.eq(preds, targets).sum().item()
     n_examples = len(targets)
     return n_correct, n_examples
 
@@ -278,7 +278,7 @@ def train(args):
                 if (e > 1 or train_iter > int(args['--valid-niter'])) and train_iter % valid_niter == 0:
                     model.eval()
                     threshold = torch.tensor([0.5])
-                    n_examples = n_correct = val_loss = 0
+                    n_examples = n_correct = b_val_loss = 0
 
                     with torch.no_grad():
                         test_df = test_df.sample(frac=1.)
@@ -287,16 +287,16 @@ def train(args):
                             batch_n_correct, batch_n_examples = accuracy(val_preds, val_targets)
                             vloss = loss_fcn(val_preds, val_targets)
 
-                            val_loss += vloss.item()
+                            b_val_loss += vloss.item()
                             n_correct += batch_n_correct
                             n_examples += batch_n_examples
 
                     val_acc = n_correct / n_examples
-                    val_loss = val_loss / n_examples
+                    val_loss = b_val_loss / n_examples
 
                     is_better = len(val_accuracy_m) == 0 or val_acc > max(val_accuracy_m)
                     val_loss_m.append(round(val_loss / n_examples, 5))
-                    val_accuracy_m.append(val_acc.item())
+                    val_accuracy_m.append(val_acc)
 
                     if is_better: 
                         if args['--save']:
@@ -309,7 +309,7 @@ def train(args):
                 if train_iter % int(args['--log-every']) == 0:
                     # track metrics
                     loss_m.append(round(loss.item() / len(targets), 4))
-                    accuracy_m.append((total_correct.float() / total_examples).item())
+                    accuracy_m.append(total_correct / total_examples)
                     train_itrs.append(train_iter)
                     epoch_track.append(e)
                     total_correct = total_examples = 0
