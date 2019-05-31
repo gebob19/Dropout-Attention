@@ -104,7 +104,7 @@ class TransformerClassifier(SaveModel):
         
                                       
     def forward(self, x):
-        h, x_len = self.encoder(x, self.lang, self.device)
+        h, x_len = self.encoder(x, self.language, self.device)
         
         # Create masks for attention to only look left 
         attn_mask = torch.full((x_len, x_len), -float('Inf'), device=self.device, dtype=h.dtype)

@@ -104,22 +104,22 @@ def load(path, cpu=False):
     train_batch_size =  int(metrics['args']['--batch-size'])
     dropout =  float(metrics['args']['--dropout'])
 
-    # model = TransformerClassifier(lang=lang, 
-    #                                 device=device,
-    #                                 embed_dim=embed_size, 
-    #                                 hidden_dim=hidden_size,
-    #                                 num_embed=lang.n_words,
-    #                                 num_pos=max_sentence_len, 
-    #                                 num_heads=n_heads,
-    #                                 num_layers=n_layers,
-    #                                 dropout=dropout,
-    #                                 n_classes=1)
-    model = RNN_Self_Attention_Classifier(language=lang, device=device,
-                                      batch_size=train_batch_size,
-                                      embed_dim=embed_size, 
-                                      hidden_dim=hidden_size,
-                                      num_embed=lang.n_words,
-                                      n_classes=1)
+    model = TransformerClassifier(language=lang, 
+                                    device=device,
+                                    embed_dim=embed_size, 
+                                    hidden_dim=hidden_size,
+                                    num_embed=lang.n_words,
+                                    num_pos=max_sentence_len, 
+                                    num_heads=n_heads,
+                                    num_layers=n_layers,
+                                    dropout=dropout,
+                                    n_classes=1)
+    # model = RNN_Self_Attention_Classifier(language=lang, device=device,
+    #                                   batch_size=train_batch_size,
+    #                                   embed_dim=embed_size, 
+    #                                   hidden_dim=hidden_size,
+    #                                   num_embed=lang.n_words,
+    #                                   n_classes=1)
     optimizer = torch.optim.Adam(model.parameters())
     
     model.load_state_dict(model_checkpoint['state_dict'])
@@ -195,21 +195,21 @@ def train(args):
         hidden_size = int(args['--hidden-size'])
         embed_size = int(args['--embed-size'])
 
-        # model = TransformerClassifier(lang=lang, device=device,
-        #                               embed_dim=embed_size, 
-        #                               hidden_dim=hidden_size,
-        #                               num_embed=lang.n_words,
-        #                               num_pos=max_sentence_len, 
-        #                               num_heads=n_heads,
-        #                               num_layers=n_layers,
-        #                               dropout=float(args['--dropout']),
-        #                               n_classes=1)
-        model = RNN_Self_Attention_Classifier(language=lang, device=device,
-                                      batch_size=train_batch_size,
+        model = TransformerClassifier(language=lang, device=device,
                                       embed_dim=embed_size, 
                                       hidden_dim=hidden_size,
                                       num_embed=lang.n_words,
+                                      num_pos=max_sentence_len, 
+                                      num_heads=n_heads,
+                                      num_layers=n_layers,
+                                      dropout=float(args['--dropout']),
                                       n_classes=1)
+        # model = RNN_Self_Attention_Classifier(language=lang, device=device,
+        #                               batch_size=train_batch_size,
+        #                               embed_dim=embed_size, 
+        #                               hidden_dim=hidden_size,
+        #                               num_embed=lang.n_words,
+        #                               n_classes=1)
         # init weights 
         for p in model.parameters():
             assert p.requires_grad == True
@@ -226,6 +226,7 @@ def train(args):
     loss_m = []
     accuracy_m = []
     train_itrs = []
+    epoch_track = []
     val_loss_m = [0]
     val_accuracy_m = [0]
     absolute_start_time = time.time()
@@ -235,6 +236,7 @@ def train(args):
         return {'train_loss':loss_m,
                 'train_acc': accuracy_m,
                 'train_iterations': train_itrs,
+                'epochs': epoch_track,
                 'val_loss': val_loss_m,
                 'val_acc': val_accuracy_m,
                 'total_time': round(time.time() - absolute_start_time, 4),
@@ -307,6 +309,7 @@ def train(args):
                     loss_m.append(round(loss.item() / len(targets), 4))
                     accuracy_m.append((total_correct.float() / total_examples).item())
                     train_itrs.append(train_iter)
+                    epoch_track.append(e)
                     total_correct = total_examples = 0
 
                     print(('epoch %d, train itr %d, avg. loss %.2f, '
