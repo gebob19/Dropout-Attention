@@ -291,7 +291,7 @@ def train(args):
                             n_correct += batch_n_correct
                             n_examples += batch_n_examples
 
-                    val_acc = n_correct.float() / n_examples
+                    val_acc = n_correct / n_examples
                     val_loss = val_loss / n_examples
 
                     is_better = len(val_accuracy_m) == 0 or val_acc > max(val_accuracy_m)
