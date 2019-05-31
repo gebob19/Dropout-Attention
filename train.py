@@ -49,7 +49,7 @@ from torch import optim
 from pathlib import Path
 from docopt import docopt
  
-from model import TransformerClassifier, RNN_Self_Attention_Classifier
+from model import TransformerClassifier
 from utils import prepare_df, clip_sents
 from language_structure import load_model, Lang
 
@@ -73,6 +73,8 @@ def batch_iter(lang, data, batch_size, shuffle=False):
         results = prepare_df(lang, batch_df, base)
         results = sorted(results, key=lambda e: len(e[0].split(' ')), reverse=True)
         sents, targets = [e[0].split(' ') for e in results], [e[1] for e in results]
+
+        sents = clip_sents(sents)
         
         yield sents, torch.tensor(targets, dtype=torch.float32, device=device)
 

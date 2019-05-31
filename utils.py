@@ -19,7 +19,7 @@ def prepare_df(lang, df, base):
 
 def open_and_clean(lang, path, base):
     file = open(str(base/path), encoding='utf-8').read()
-    clean_file = normalizeString(file, stopwords=True, contractions=False)
+    clean_file = normalizeString(file, stopwords=False, contractions=False)
     return clean_file
 
 # pad sentences with pad token to equal length
