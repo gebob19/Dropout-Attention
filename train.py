@@ -181,8 +181,8 @@ def train(args):
     test_df = pd.read_csv('test.csv')
     train_df = pd.read_csv('train.csv')
     # train on longer lengths 
-    train_df = train_df[train_df.file_length > 200]
-    test_df = test_df[test_df.file_length > 200]
+    # train_df = train_df[train_df.file_length > 200]
+    # test_df = test_df[test_df.file_length > 200]
     train_df = train_df[train_df.file_length < max_sentence_len]
     test_df = test_df[test_df.file_length < max_sentence_len]
     print(len(train_df), len(test_df))
