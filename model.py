@@ -116,17 +116,22 @@ class TransformerClassifier(SaveModel):
             h = layer_norm1(h)
             x, _ = attention(h, h, h)#, attn_mask=attn_mask)
             x = self.dropout(x)
-            h = x + h 
+            # h = x + h 
 
             h = layer_norm2(h)
             x = feed_forward(h)
             x = self.dropout(x)
-            h = x + h
+            # h = x + h
             
         # bs, sent_len, embed_dim
         h = h.transpose(0, 1)
-        x, _ = torch.max(h, 1)
-        y = torch.sigmoid(self.classify(x)).squeeze(-1)
+
+        ## NEW 
+        x = self.classify(h).squeeze(-1)
+        y = torch.sigmoid(torch.mean(x, -1))
+
+        # x, _ = torch.max(h, 1)
+        # y = torch.sigmoid(self.classify(x)).squeeze(-1)
         return y
 
 
