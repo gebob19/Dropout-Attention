@@ -56,7 +56,7 @@ from language_structure import load_model, Lang
 base = Path('../aclImdb')
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-def batch_iter(lang, data, batch_size, shuffle=False):
+def batch_iter(lang, data, batch_size, max_sentence_len, shuffle=False):
     batch_num = math.ceil(len(data) / batch_size)
 
     if shuffle:
@@ -74,7 +74,7 @@ def batch_iter(lang, data, batch_size, shuffle=False):
         results = sorted(results, key=lambda e: len(e[0].split(' ')), reverse=True)
         sents, targets = [e[0].split(' ') for e in results], [e[1] for e in results]
 
-        sents = clip_sents(sents)
+        sents = clip_sents(sents, max_sentence_len)
         
         yield sents, torch.tensor(targets, dtype=torch.float32, device=device)
 
@@ -253,7 +253,7 @@ def train(args):
             begin_time = time.time()
             
             # train
-            for sents, targets in batch_iter(lang, train_df, train_batch_size, shuffle=True):
+            for sents, targets in batch_iter(lang, train_df, train_batch_size, max_sentence_len, shuffle=True):
                 torch.cuda.empty_cache()
                 start_train_time = time.time()
                 train_iter += 1 
@@ -282,7 +282,7 @@ def train(args):
 
                     with torch.no_grad():
                         test_df = test_df.sample(frac=1.)
-                        for val_sents, val_targets in batch_iter(lang, test_df[:n_valid], train_batch_size):
+                        for val_sents, val_targets in batch_iter(lang, test_df[:n_valid], train_batch_size, max_sentence_len):
                             val_preds = model(val_sents)
                             batch_n_correct, batch_n_examples = accuracy(val_preds, val_targets)
                             vloss = loss_fcn(val_preds, val_targets)
