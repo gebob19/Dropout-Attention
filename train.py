@@ -178,6 +178,8 @@ def train(args):
     n_heads =           int(args['--n-heads'])
     n_layers =          int(args['--n-layers'])
 
+    assert train_batch_size <= n_valid, "Batch Size must be > Number of Validations"
+
     test_df = pd.read_csv('test.csv')
     train_df = pd.read_csv('train.csv')
     # train on longer lengths 
