@@ -61,6 +61,7 @@ class TaskSpecificAttention(SaveModel):
             
             # task attention
             w = self.attention(x, te)
+            print(w)
             weighted_attention = w * x
             x = self.dropout(weighted_attention)
             
