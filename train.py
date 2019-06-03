@@ -105,18 +105,18 @@ def load(path, cpu=False):
     train_batch_size =  int(metrics['args']['--batch-size'])
     dropout =  float(metrics['args']['--dropout'])
 
-    model = TaskSpecificAttention(lang, device, embed_size, hidden_size, lang.n_words, n_heads, n_layers, dropout, 1)
+    # model = TaskSpecificAttention(lang, device, embed_size, hidden_size, lang.n_words, n_heads, n_layers, dropout, 1)
 
-    # model = TransformerClassifier(language=lang, 
-    #                                 device=device,
-    #                                 embed_dim=embed_size, 
-    #                                 hidden_dim=hidden_size,
-    #                                 num_embed=lang.n_words,
-    #                                 num_pos=max_sentence_len, 
-    #                                 num_heads=n_heads,
-    #                                 num_layers=n_layers,
-    #                                 dropout=dropout,
-    #                                 n_classes=1)
+    model = TransformerClassifier(language=lang, 
+                                    device=device,
+                                    embed_dim=embed_size, 
+                                    hidden_dim=hidden_size,
+                                    num_embed=lang.n_words,
+                                    num_pos=max_sentence_len, 
+                                    num_heads=n_heads,
+                                    num_layers=n_layers,
+                                    dropout=dropout,
+                                    n_classes=1)
     # model = RNN_Self_Attention_Classifier(language=lang, device=device,
     #                                   batch_size=train_batch_size,
     #                                   embed_dim=embed_size, 
