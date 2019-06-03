@@ -100,14 +100,14 @@ class TaskSpecificAttention(SaveModel):
         x = self.h1(x)
         x = self.h2(x)
         x = self.h3(x.transpose(-1, -2)).squeeze()
-        y = torch.sigmoid(self.classify(x))
+        y = torch.sigmoid(self.classify(x)).squeeze()
 
         # -- THIS MAY BE THE SHITTER
         # maxpool, _ = torch.mean(x, -1)
         # y = torch.sigmoid(self.classify(maxpool)).squeeze()
-        # print(y)
+        print(y)
         
-        return y.squeeze()
+        return y
 
 class TaskAttention(SaveModel):
     def __init__(self):
