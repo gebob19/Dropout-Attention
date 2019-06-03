@@ -27,7 +27,7 @@ Options:
     --dropout=<float>                       dropout [default: 0.3]
     --n-words=<int>                         number of words in language model [default: 10000]
     --max-sent-len=<int>                    max sentence length to encode  [default: 10000]
-    --n-heads=<int>                         n of parralel attention layers in MHA [default: 2]
+    --n-heads=<int>                         n of parralel attention layers in MHA [default: 1]
     --n-layers=<int>                        n of transfomer layers stacked [default: 3]
     --dset-size=<int>                       size of the dataset (for quick testing) [default: 0]
 """
@@ -151,8 +151,8 @@ def qtest(args):
     args['--batch-size'] = '2'
     args['--embed-size'] = '100'
     args['--hidden-size'] = '50'
-    args['--n-heads'] = '2'
-    args['--n-layers'] =  '2'
+    args['--n-heads'] = '1'
+    args['--n-layers'] =  '1'
 
     args['--n-words'] = '10000'
     
