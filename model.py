@@ -16,7 +16,7 @@ class SaveModel(nn.Module):
         torch.save(params, path)
 
 
-class TaskSpecificAttention(nn.Module):
+class TaskSpecificAttention(SaveModel):
     def __init__(self, language, device, embed_dim, hidden_dim, num_embed, num_heads, num_layers, dropout, n_classes):
         super().__init__()
         self.device = device
