@@ -1,3 +1,5 @@
+*.zip
+*.pkl
 model_saves/*
 
 # Byte-compiled / optimized / DLL files
