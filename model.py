@@ -49,7 +49,7 @@ class TaskSpecificAttention(SaveModel):
         x = self.w_embedding(x)
 
         for task, mha, linear_1, linear_2, lnorm_1, lnorm_2 in zip(self.tasks, self.mhas, self.linear_1, self.linear_2, self.ln_1, self.ln_2):
-            tasks = torch.tensor([task] * batch_size)
+            tasks = torch.tensor([task] * batch_size, device=self.device)
             te = self.t_embedding(tasks).unsqueeze(-1)
             
             x = lnorm_1(x)
