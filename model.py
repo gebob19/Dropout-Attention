@@ -72,6 +72,7 @@ class TaskSpecificAttention(SaveModel):
         x = x.transpose(1, 2)
         maxpool, _ = torch.max(x, -1)
         y = torch.sigmoid(self.classify(maxpool)).squeeze()
+        print(y)
         
         return y
 
