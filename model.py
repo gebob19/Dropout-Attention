@@ -53,7 +53,7 @@ class TaskSpecificAttention(SaveModel):
             tasks = torch.tensor([task] * batch_size, device=self.device)
             te = self.t_embedding(tasks).unsqueeze(-1)
             
-            x = lnorm_1(x)
+            # x = lnorm_1(x)
             # bs, seq, embed
             x, _ = mha(x, x, x)
             # bs, seq, hidden
@@ -64,9 +64,9 @@ class TaskSpecificAttention(SaveModel):
             weighted_attention = w * x
             x = self.dropout(weighted_attention)
             
-            x = lnorm_2(x)
+            # x = lnorm_2(x)
             # bs, seq, embed
-            x = F.relu(linear_2(x))
+            # x = F.relu(linear_2(x))
 
         # bs, embed, seq
         x = x.transpose(1, 2)
