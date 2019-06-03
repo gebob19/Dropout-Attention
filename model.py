@@ -69,12 +69,11 @@ class TaskSpecificAttention(SaveModel):
         h = h + self.pos_embeddings(positions).expand_as(h)
         h = self.dropout(h)
 
-
         for task, mha, linear_1, linear_2, feed_forward, lnorm_1, lnorm_2, lnorm_3 in zip(self.tasks, self.mhas, self.linear_1, self.linear_2, self.ff, self.ln_1, self.ln_2, self.ln_3):
             tasks = torch.tensor([task] * batch_size, device=self.device)
             te = self.t_embedding(tasks).unsqueeze(-1)
             
-            # top = h
+            top = h
             # seq, bs, embed
             x, _ = mha(h, h, h)
             h = x + h
@@ -100,7 +99,7 @@ class TaskSpecificAttention(SaveModel):
             h = x + h
             h = lnorm_3(h)
 
-            # h = h + top
+            h = h + top
             # print("After Attention")
             # (-0.007 mean, 0.0218 var)
             # print(torch.mean(x), torch.var(x))
