@@ -71,21 +71,33 @@ class TaskSpecificAttention(SaveModel):
             x = lnorm_1(x)
             h, _ = mha(x, x, x)
             x = h + x
+            print("After Multihead Attention")
+            # (-0.007 mean, 1.5 var)
+            print(torch.mean(x), torch.var(x))
             
             # bs, seq, hidden    
             h = lnorm_2(h)
             x = feed_forward(h)
             x = self.dropout(x)
+            print("After FF")
+            # very close to zero now (0.12 mean, 0.13 var)
+            print(torch.mean(x), torch.var(x))
         
             # task attention
             w = self.attention(x, te)
             h = 10 * w * x
             x = h 
+            print("After Attention")
+            # (-0.007 mean, 0.0218 var)
+            print(torch.mean(x), torch.var(x))
             # h = self.dropout(h)
 
             # # x = lnorm_2(x)
             # # bs, seq, embed
             x = F.relu(linear_2(x))
+            print("After Linear 2 + RELU")
+            # (0.056 mean, 0.0097 var)
+            print(torch.mean(x), torch.var(x))
 
         # bs, embed, seq
         x = x.transpose(1, 2)
