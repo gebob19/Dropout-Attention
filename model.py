@@ -62,14 +62,14 @@ class TaskSpecificAttention(SaveModel):
         
     def forward(self, sents):
         batch_size = len(sents)
-        h, _ = to_input_tensor(self.language, sents, self.device)
+        x, _ = to_input_tensor(self.language, sents, self.device)
+
         positions = torch.arange(len(x), device=x.device).unsqueeze(-1)
+        h = self.w_embedding(x)
         h = h + self.pos_embeddings(positions).expand_as(h)
         h = self.dropout(h)
 
         # x = x.transpose(0, 1)
-        # seq, bs, embed
-        h = self.w_embedding(x)
 
         for task, mha, linear_1, linear_2, feed_forward, lnorm_1, lnorm_2, lnorm_3 in zip(self.tasks, self.mhas, self.linear_1, self.linear_2, self.ff, self.ln_1, self.ln_2, self.ln_3):
             tasks = torch.tensor([task] * batch_size, device=self.device)
