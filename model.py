@@ -48,7 +48,7 @@ class TaskSpecificAttention(SaveModel):
             
             self.ln_1.append(nn.LayerNorm(embed_dim, eps=1e-12))
             self.ln_2.append(nn.LayerNorm(embed_dim, eps=1e-12))
-            self.ln_3.append(nn.LayerNorm(hidden_dim, eps=1e-12))
+            self.ln_3.append(nn.LayerNorm(embed_dim, eps=1e-12))
         
         self.classify = nn.Linear(embed_dim, n_classes)
 
