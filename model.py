@@ -31,7 +31,7 @@ class TaskSpecificAttention(SaveModel):
         self.mhas, self.linear_1, self.linear_2 = nn.ModuleList(), nn.ModuleList(), nn.ModuleList()
         self.ff = nn.ModuleList()
         self.ln_1, self.ln_2, self.ln_3 = nn.ModuleList(), nn.ModuleList(), nn.ModuleList()
-        self.tasks = []
+        self.tasks = [] 
         self.attention = TaskAttention()
         # self.maxpool = nn.MaxPool1d(8)
         # self.ln3 = nn.BatchNorm1d(hidden_dim, eps=1e-12)
