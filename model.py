@@ -65,7 +65,7 @@ class TaskSpecificAttention(SaveModel):
             x = h + x
             
             # bs, seq, hidden    
-            h = layer_norm2(h)
+            h = lnorm_2(h)
             x = feed_forward(h)
             x = self.dropout(x)
         
