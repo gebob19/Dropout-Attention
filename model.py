@@ -23,7 +23,6 @@ class TaskSpecificAttention(SaveModel):
         
         self.w_embedding = nn.Embedding(self.language.n_words, embed_dim)
         self.t_embedding = nn.Embedding(num_layers, hidden_dim)
-        self.t_embedding.requires_grad = False
 
         self.dropout = nn.Dropout(dropout)
         
@@ -83,7 +82,7 @@ class TaskAttention(SaveModel):
     def forward(self, x, te):
         # task attention
         w = torch.bmm(x, te)
-        w = torch.softmax(w.squeeze(-1), -1).unsqueeze(-1)
+        # w = torch.softmax(w.squeeze(-1), -1).unsqueeze(-1)
         return w
 
 
