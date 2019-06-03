@@ -33,7 +33,8 @@ class TaskSpecificAttention(SaveModel):
         self.ln_1, self.ln_2, self.ln_3 = nn.ModuleList(), nn.ModuleList(), nn.ModuleList()
         self.tasks = [] 
         self.attention = TaskAttention()
-        self.maxpool = nn.MaxPool1d(8)
+        # self.maxpool = nn.MaxPool1d(8)
+        # self.ln3 = nn.BatchNorm1d(hidden_dim, eps=1e-12)
         
         for i in range(num_layers):
             self.mhas.append(nn.MultiheadAttention(embed_dim, num_heads, dropout=dropout))
@@ -50,12 +51,12 @@ class TaskSpecificAttention(SaveModel):
             self.ln_2.append(nn.LayerNorm(embed_dim, eps=1e-12))
             self.ln_3.append(nn.LayerNorm(embed_dim, eps=1e-12))
         
-        # self.classify = nn.Linear(embed_dim, n_classes)
+        self.classify = nn.Linear(embed_dim, n_classes)
 
-        self.h1 = nn.Linear(self.final_dim, hidden_dim)
-        self.h2 = nn.Linear(hidden_dim, hidden_dim)
-        self.h3 = nn.Linear(embed_dim, 1)
-        self.classify = nn.Linear(hidden_dim, n_classes)
+        # self.h1 = nn.Linear(self.final_dim, hidden_dim)
+        # self.h2 = nn.Linear(hidden_dim, hidden_dim)
+        # self.h3 = nn.Linear(embed_dim, 1)
+        # self.classify = nn.Linear(hidden_dim, n_classes)
         
     def forward(self, sents):
         batch_size = len(sents)
@@ -68,6 +69,7 @@ class TaskSpecificAttention(SaveModel):
             tasks = torch.tensor([task] * batch_size, device=self.device)
             te = self.t_embedding(tasks).unsqueeze(-1)
             
+            top = h
             # bs, seq, embed
             x, _ = mha(h, h, h)
             h = x + h
@@ -90,6 +92,8 @@ class TaskSpecificAttention(SaveModel):
             x = 10 * w * h
             h = x + h
             h = lnorm_3(h)
+
+            h = h + top
             # print("After Attention")
             # (-0.007 mean, 0.0218 var)
             # print(torch.mean(x), torch.var(x))
@@ -105,21 +109,21 @@ class TaskSpecificAttention(SaveModel):
         # bs, embed, seq
         x = x.transpose(1, 2)
 
-        # pool + padding
-        p = self.maxpool(x)
-        diff = self.final_dim - p.size(-1)
-        pad = torch.zeros((p.size(0), p.size(1), diff), device=self.device)
-        pad.require_grad = False
-        x = torch.cat([p, pad], -1)
+        # # pool + padding
+        # p = self.maxpool(x)
+        # diff = self.final_dim - p.size(-1)
+        # pad = torch.zeros((p.size(0), p.size(1), diff), device=self.device)
+        # pad.require_grad = False
+        # x = torch.cat([p, pad], -1)
 
         # classification layers
-        x = F.relu(self.h1(x))
-        x = F.relu(self.h2(x))
-        x = self.h3(x.transpose(-1, -2)).squeeze()
-        y = torch.sigmoid(self.classify(x)).squeeze()
+        # x = F.relu(self.h1(x))
+        # x = F.relu(self.h2(x))
+        # x = self.h3(x.transpose(-1, -2)).squeeze()
+        # y = torch.sigmoid(self.classify(x)).squeeze()
 
-        # m, _ = torch.max(x, -1)
-        # y = torch.sigmoid(self.classify(m)).squeeze()
+        m, _ = torch.max(x, -1)
+        y = torch.sigmoid(self.classify(m)).squeeze()
         
         return y
 
