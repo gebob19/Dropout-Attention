@@ -199,6 +199,7 @@ def train(args):
     if args['--load']:
         model, optimizer, lang, metrics = load(args['--load-from'])
         model = model.to(device)
+        optimizer = optimizer.to(device)
         print('model loaded...')
     else: 
         lang = load_model()
