@@ -124,7 +124,7 @@ def load(path, cpu=False):
     #                                   num_embed=lang.n_words,
     #                                   n_classes=1)
     optimizer = torch.optim.Adam(model.parameters())
-    if device == 'cuda':
+    if torch.cuda.is_available():
         optimizer = optimizer.cuda()
         print('Optim to cuda...')
     
