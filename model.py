@@ -34,7 +34,7 @@ class TaskSpecificAttention(SaveModel):
         for i in range(num_layers):
             self.mhas.append(nn.MultiheadAttention(embed_dim, num_heads, dropout=dropout))
             self.linear_1.append(nn.Linear(embed_dim, hidden_dim))
-            self.linear_2.append(nn.Linear(hidden_dim, hidden_dim))
+            self.linear_2.append(nn.Linear(hidden_dim, embed_dim))
             self.tasks.append(i)
             
             self.ln_1.append(nn.LayerNorm(embed_dim, eps=1e-12))
@@ -64,7 +64,7 @@ class TaskSpecificAttention(SaveModel):
             w = self.attention(x, te)
             h = w * x
             x = self.dropout(h)
-            # x = h + x
+            x = h + x
 
             # x = lnorm_2(x)
             # bs, seq, embed

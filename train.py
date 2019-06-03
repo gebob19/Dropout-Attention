@@ -150,7 +150,7 @@ def save(model_save_path, metrics, model, optimizer):
 def qtest(args):
     args['--batch-size'] = '2'
     args['--embed-size'] = '100'
-    args['--hidden-size'] = '100'
+    args['--hidden-size'] = '50'
     args['--n-heads'] = '2'
     args['--n-layers'] =  '2'
 
