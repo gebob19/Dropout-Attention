@@ -72,7 +72,7 @@ class TaskSpecificAttention(SaveModel):
             # task attention
             w = self.attention(x, te)
             h = w * x
-            x = h
+            x = h 
             # h = self.dropout(h)
 
             # # x = lnorm_2(x)
