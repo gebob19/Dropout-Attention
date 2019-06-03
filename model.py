@@ -70,9 +70,9 @@ class TaskSpecificAttention(SaveModel):
             x = self.dropout(x)
         
             # task attention
-            # w = self.attention(x, te)
-            # h = w * x
-            # x = h 
+            w = self.attention(x, te)
+            h = 10 * w * x
+            x = h 
             # h = self.dropout(h)
 
             # # x = lnorm_2(x)
@@ -81,6 +81,7 @@ class TaskSpecificAttention(SaveModel):
 
         # bs, embed, seq
         x = x.transpose(1, 2)
+        # -- THIS MAY BE THE SHITTER
         maxpool, _ = torch.max(x, -1)
         y = torch.sigmoid(self.classify(maxpool)).squeeze()
         # print(y)
