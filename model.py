@@ -29,7 +29,7 @@ class TaskSpecificAttention(SaveModel):
         
         self.mhas, self.linear_1, self.linear_2 = nn.ModuleList(), nn.ModuleList(), nn.ModuleList()
         self.ff = nn.ModuleList()
-        self.ln_1, self.ln_2 = nn.ModuleList(), nn.ModuleList()
+        self.ln_1, self.ln_2, self.ln_3 = nn.ModuleList(), nn.ModuleList(), nn.ModuleList()
         self.tasks = []
         self.attention = TaskAttention()
         # self.maxpool = nn.MaxPool1d(8)
@@ -48,6 +48,7 @@ class TaskSpecificAttention(SaveModel):
             
             self.ln_1.append(nn.LayerNorm(embed_dim, eps=1e-12))
             self.ln_2.append(nn.LayerNorm(embed_dim, eps=1e-12))
+            self.ln_3.append(nn.LayerNorm(hidden_dim, eps=1e-12))
         
         self.classify = nn.Linear(embed_dim, n_classes)
 
@@ -63,37 +64,39 @@ class TaskSpecificAttention(SaveModel):
         # bs, seq, embed
         x = self.w_embedding(x)
 
-        for task, mha, linear_1, linear_2, feed_forward, lnorm_1, lnorm_2 in zip(self.tasks, self.mhas, self.linear_1, self.linear_2, self.ff, self.ln_1, self.ln_2):
+        for task, mha, linear_1, linear_2, feed_forward, lnorm_1, lnorm_2, lnorm_3 in zip(self.tasks, self.mhas, self.linear_1, self.linear_2, self.ff, self.ln_1, self.ln_2, self.ln_3):
             tasks = torch.tensor([task] * batch_size, device=self.device)
             te = self.t_embedding(tasks).unsqueeze(-1)
             
             # bs, seq, embed
-            x = lnorm_1(x)
-            h, _ = mha(x, x, x)
-            x = h + x
+            x, _ = mha(h, h, h)
+            h = x + h
+            h = lnorm_1(h)
             # print("After Multihead Attention")
             # (-0.007 mean, 1.5 var)
             # print(torch.mean(x), torch.var(x))
             
             # bs, seq, hidden    
-            h = lnorm_2(h)
             x = feed_forward(h)
             x = self.dropout(x)
+            h = x + h
+            h = lnorm_2(h)
             # print("After FF")
             # very close to zero now (0.12 mean, 0.13 var)
             # print(torch.mean(x), torch.var(x))
         
             # task attention
-            w = self.attention(x, te)
-            h = 10 * w * x
-            x = h 
+            w = self.attention(h, te)
+            x = 10 * w * x
+            h = x + h
+            h = lnorm_3(h)
             # print("After Attention")
             # (-0.007 mean, 0.0218 var)
             # print(torch.mean(x), torch.var(x))
             # h = self.dropout(h)
 
             # # x = lnorm_2(x)
-            # # bs, seq, embed
+            # bs, seq, embed
             x = F.relu(linear_2(x))
             # print("After Linear 2 + RELU")
             # (0.056 mean, 0.0097 var)
