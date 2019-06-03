@@ -21,7 +21,7 @@ class TaskSpecificAttention(SaveModel):
         self.device = device
         self.language = language
         
-        self.w_embedding = nn.Embedding(lang.n_words, embed_dim)
+        self.w_embedding = nn.Embedding(self.language.n_words, embed_dim)
         self.t_embedding = nn.Embedding(num_layers, hidden_dim)
         self.dropout = nn.Dropout(dropout)
         
@@ -43,7 +43,7 @@ class TaskSpecificAttention(SaveModel):
         
     def forward(self, sents):
         batch_size = len(sents)
-        x, lengths = to_input_tensor(lang, sents, device)
+        x, lengths = to_input_tensor(self.language, sents, self.device)
         x = x.transpose(0, 1)
         # bs, seq, embed
         x = self.w_embedding(x)
