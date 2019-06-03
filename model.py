@@ -15,6 +15,41 @@ class SaveModel(nn.Module):
         }
         torch.save(params, path)
 
+
+class TaskSpecificAttention(SaveModel):
+    def __init__(self, language, device, embed_dim, hidden_dim, num_embed, num_heads, num_layers, dropout, n_classes):
+        super().__init__()
+        self.device = device
+        self.language = language
+        
+        self.w_embedding = nn.Embedding(self.language.n_words, embed_dim)
+        # only sentiment task
+        self.t_embedding = nn.Embedding(1, hidden_dim)
+        
+        self.mha = nn.MultiheadAttention(embed_dim, 1, dropout=dropout)
+        self.l1 = nn.Linear(embed_dim, hidden_dim)
+        self.classify = nn.Linear(hidden_dim, n_classes)
+        
+    def forward(self, sents, tasks):
+        x, lengths = to_input_tensor(self.language, sents, self.device)
+        x = x.transpose(0, 1)
+        tasks = torch.tensor(tasks)
+        
+        te = self.t_embedding(tasks).unsqueeze(-1)
+        xe = self.w_embedding(x)
+        xa, _ = self.mha(xe, xe, xe)
+        x = self.l1(xa)
+        
+        # task attention
+        w = torch.bmm(x, te)
+        w = torch.softmax(w.squeeze(-1), -1).unsqueeze(-1)
+        weighted_attention = (w * x).transpose(1, 2)
+        
+        maxpool, _ = torch.max(weighted_attention, -1)
+        y = torch.sigmoid(self.classify(maxpool))
+        return y.squeeze()
+
+
 class RNN_Self_Attention_Classifier(SaveModel):
     def __init__(self, language, device, batch_size, embed_dim, hidden_dim, num_embed, n_classes):
         super().__init__()
