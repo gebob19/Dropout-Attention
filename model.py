@@ -69,26 +69,27 @@ class TaskSpecificAttention(SaveModel):
         h = h + self.pos_embeddings(positions).expand_as(h)
         h = self.dropout(h)
 
-        # x = x.transpose(0, 1)
 
         for task, mha, linear_1, linear_2, feed_forward, lnorm_1, lnorm_2, lnorm_3 in zip(self.tasks, self.mhas, self.linear_1, self.linear_2, self.ff, self.ln_1, self.ln_2, self.ln_3):
             tasks = torch.tensor([task] * batch_size, device=self.device)
             te = self.t_embedding(tasks).unsqueeze(-1)
             
-            top = h
-            # bs, seq, embed
+            # top = h
+            # seq, bs, embed
             x, _ = mha(h, h, h)
             h = x + h
             h = lnorm_1(h)
+            # print(h.shape)
             # print("After Multihead Attention")
             # (-0.007 mean, 1.5 var)
             # print(torch.mean(x), torch.var(x))
             
-            # bs, seq, hidden    
+            # seq, bs, embed
             x = feed_forward(h)
             x = self.dropout(x)
             h = x + h
             h = lnorm_2(h)
+            # print(h.shape)
             # print("After FF")
             # very close to zero now (0.12 mean, 0.13 var)
             # print(torch.mean(x), torch.var(x))
@@ -112,7 +113,7 @@ class TaskSpecificAttention(SaveModel):
             # (0.056 mean, 0.0097 var)
             # print(torch.mean(x), torch.var(x))
 
-        # bs, sent_len, embed_dim
+        # bs, seq, embed_dim
         h = h.transpose(0, 1)
 
         # # pool + padding
@@ -128,7 +129,7 @@ class TaskSpecificAttention(SaveModel):
         # x = self.h3(x.transpose(-1, -2)).squeeze()
         # y = torch.sigmoid(self.classify(x)).squeeze()
 
-        m, _ = torch.max(h, -1)
+        m, _ = torch.max(h, -2)
         y = torch.sigmoid(self.classify(m)).squeeze()
         
         return y
@@ -139,8 +140,10 @@ class TaskAttention(SaveModel):
         
     def forward(self, x, te):
         # task attention
+        x = x.transpose(0, 1)
         w = torch.bmm(x, te)
         w = torch.softmax(w.squeeze(-1), -1).unsqueeze(-1)
+        w = w.transpose(0, 1)
         return w
 
 
