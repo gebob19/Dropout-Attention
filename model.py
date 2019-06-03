@@ -97,8 +97,8 @@ class TaskSpecificAttention(SaveModel):
         x = torch.cat([p, pad], -1)
 
         # classification layers
-        x = self.h1(x)
-        x = self.h2(x)
+        x = F.relu(self.h1(x))
+        x = F.relu(self.h2(x))
         x = self.h3(x.transpose(-1, -2)).squeeze()
         y = torch.sigmoid(self.classify(x)).squeeze()
 
