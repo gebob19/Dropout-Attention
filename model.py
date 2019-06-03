@@ -77,7 +77,7 @@ class TaskSpecificAttention(SaveModel):
 
             # # x = lnorm_2(x)
             # # bs, seq, embed
-            x = F.relu(linear_2(x))
+            # x = F.relu(linear_2(x))
 
         # bs, embed, seq
         x = x.transpose(1, 2)
