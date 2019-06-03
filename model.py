@@ -92,7 +92,7 @@ class TaskSpecificAttention(SaveModel):
         # pool + padding
         p = self.maxpool(x)
         diff = self.final_dim - p.size(-1)
-        pad = torch.zeros((p.size(0), p.size(1), diff))
+        pad = torch.zeros((p.size(0), p.size(1), diff), device=self.device)
         pad.require_grad = False
         x = torch.cat([p, pad], -1)
 
