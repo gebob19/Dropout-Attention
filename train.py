@@ -185,6 +185,8 @@ def train(args):
     test_df = pd.read_csv('test.csv')
     size = int(args['--dset-size'])
     if size:
+        train_df = train_df.sample(frac=1.)
+        test_df = test_df.sample(frac=1.)
         train_df = train_df[:size]
         test_df = test_df[:size]
     # train on longer lengths 
