@@ -49,7 +49,7 @@ from torch import optim
 from pathlib import Path
 from docopt import docopt
  
-from model import TransformerClassifier
+from model import *
 from utils import prepare_df, clip_sents
 from language_structure import load_model, Lang
 
@@ -82,8 +82,7 @@ def batch_iter(lang, data, batch_size, max_sentence_len, shuffle=False):
 def accuracy(preds, targets, threshold=torch.tensor([0.5], device=device)):
     preds = (preds >= threshold).float()
     n_correct = torch.eq(preds, targets).sum().item()
-    n_examples = len(targets)
-    return n_correct, n_examples
+    return n_correct
 
 def load(path, cpu=False):
     model_dir = 'model_saves/' + path
@@ -106,16 +105,18 @@ def load(path, cpu=False):
     train_batch_size =  int(metrics['args']['--batch-size'])
     dropout =  float(metrics['args']['--dropout'])
 
-    model = TransformerClassifier(language=lang, 
-                                    device=device,
-                                    embed_dim=embed_size, 
-                                    hidden_dim=hidden_size,
-                                    num_embed=lang.n_words,
-                                    num_pos=max_sentence_len, 
-                                    num_heads=n_heads,
-                                    num_layers=n_layers,
-                                    dropout=dropout,
-                                    n_classes=1)
+    model = TaskSpecificAttention(lang, device, embed_size, hidden_size, lang.n_words, n_heads, n_layers, dropout, 1)
+
+    # model = TransformerClassifier(language=lang, 
+    #                                 device=device,
+    #                                 embed_dim=embed_size, 
+    #                                 hidden_dim=hidden_size,
+    #                                 num_embed=lang.n_words,
+    #                                 num_pos=max_sentence_len, 
+    #                                 num_heads=n_heads,
+    #                                 num_layers=n_layers,
+    #                                 dropout=dropout,
+    #                                 n_classes=1)
     # model = RNN_Self_Attention_Classifier(language=lang, device=device,
     #                                   batch_size=train_batch_size,
     #                                   embed_dim=embed_size, 
@@ -199,15 +200,18 @@ def train(args):
         hidden_size = int(args['--hidden-size'])
         embed_size = int(args['--embed-size'])
 
-        model = TransformerClassifier(language=lang, device=device,
-                                      embed_dim=embed_size, 
-                                      hidden_dim=hidden_size,
-                                      num_embed=lang.n_words,
-                                      num_pos=max_sentence_len, 
-                                      num_heads=n_heads,
-                                      num_layers=n_layers,
-                                      dropout=float(args['--dropout']),
-                                      n_classes=1)
+
+        model = TaskSpecificAttention(lang, device, embed_size, hidden_size, lang.n_words, n_heads, n_layers, float(args['--dropout']), 1)
+
+        # model = TransformerClassifier(language=lang, device=device,
+        #                               embed_dim=embed_size, 
+        #                               hidden_dim=hidden_size,
+        #                               num_embed=lang.n_words,
+        #                               num_pos=max_sentence_len, 
+        #                               num_heads=n_heads,
+        #                               num_layers=n_layers,
+        #                               dropout=float(args['--dropout']),
+        #                               n_classes=1)
         # model = RNN_Self_Attention_Classifier(language=lang, device=device,
         #                               batch_size=train_batch_size,
         #                               embed_dim=embed_size, 
@@ -260,14 +264,14 @@ def train(args):
                 train_iter += 1 
                 optimizer.zero_grad()
                 
-                preds = model(sents)
+                preds = model(sents, [0] * len(targets))
                 loss = loss_fcn(preds, targets)
                 epoch_loss += loss.item()
                 
                 # accuracy check 
-                n_correct, n_examples = accuracy(preds, targets)
+                n_correct = accuracy(preds, targets)
                 total_correct += n_correct
-                total_examples += n_examples
+                total_examples += train_batch_size
             
                 loss.backward()
                 grad_norm = nn.utils.clip_grad_norm_(model.parameters(), clip_grad)
@@ -278,19 +282,18 @@ def train(args):
                 # perform validation
                 if (e > 1 or train_iter > int(args['--valid-niter'])) and train_iter % valid_niter == 0:
                     model.eval()
-                    threshold = torch.tensor([0.5])
                     n_examples = n_correct = b_val_loss = 0
 
                     with torch.no_grad():
-                        test_df = test_df.sample(frac=1.)
+                        # test_df = test_df.sample(frac=1.)
                         for val_sents, val_targets in batch_iter(lang, test_df[:n_valid], train_batch_size, max_sentence_len):
-                            val_preds = model(val_sents)
-                            batch_n_correct, batch_n_examples = accuracy(val_preds, val_targets)
+                            val_preds = model(val_sents, [0] * len(targets))
+                            batch_n_correct = accuracy(val_preds, val_targets)
                             vloss = loss_fcn(val_preds, val_targets)
 
                             b_val_loss += vloss.item()
                             n_correct += batch_n_correct
-                            n_examples += batch_n_examples
+                            n_examples += train_batch_size
 
                     val_acc = n_correct / n_examples
                     val_loss = b_val_loss / n_examples
