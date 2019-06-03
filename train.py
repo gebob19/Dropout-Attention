@@ -29,7 +29,7 @@ Options:
     --max-sent-len=<int>                    max sentence length to encode  [default: 10000]
     --n-heads=<int>                         n of parralel attention layers in MHA [default: 2]
     --n-layers=<int>                        n of transfomer layers stacked [default: 3]
-
+    --dset-size=<int>                       size of the dataset (for quick testing) [default: 0]
 """
 
 import sys
@@ -181,8 +181,12 @@ def train(args):
 
     assert train_batch_size <= n_valid, "Batch Size must be > Number of Validations"
 
-    test_df = pd.read_csv('test.csv')
     train_df = pd.read_csv('train.csv')
+    test_df = pd.read_csv('test.csv')
+    size = int(args['--dset-size'])
+    if size:
+        train_df = train_df[:size]
+        test_df = test_df[:size]
     # train on longer lengths 
     # train_df = train_df[train_df.file_length > 200]
     # test_df = test_df[test_df.file_length > 200]
