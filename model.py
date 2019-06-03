@@ -73,7 +73,7 @@ class TaskSpecificAttention(SaveModel):
             tasks = torch.tensor([task] * batch_size, device=self.device)
             te = self.t_embedding(tasks).unsqueeze(-1)
             
-            # top = h
+            top = h
             # seq, bs, embed
             x, _ = mha(h, h, h)
             h = x + h
@@ -99,7 +99,7 @@ class TaskSpecificAttention(SaveModel):
             h = x + h
             h = lnorm_3(h)
 
-            # h = h + top
+            h = h + top
             # print("After Attention")
             # (-0.007 mean, 0.0218 var)
             # print(torch.mean(x), torch.var(x))
