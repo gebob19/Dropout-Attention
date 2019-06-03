@@ -341,9 +341,9 @@ def main():
     args = docopt(__doc__)
     
     # seed the random number generators
-    seed = int(args['--seed'])
-    torch.manual_seed(seed)
-    np.random.seed(seed * 13 // 7)
+    # seed = int(args['--seed'])
+    # torch.manual_seed(seed)
+    # np.random.seed(seed * 13 // 7)
 
     if args['--qtest']:
         qtest(args)
