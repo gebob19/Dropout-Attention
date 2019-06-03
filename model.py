@@ -23,6 +23,7 @@ class TaskSpecificAttention(SaveModel):
         
         self.w_embedding = nn.Embedding(self.language.n_words, embed_dim)
         self.t_embedding = nn.Embedding(num_layers, hidden_dim)
+
         self.dropout = nn.Dropout(dropout)
         
         self.mhas, self.linear_1, self.linear_2 = nn.ModuleList(), nn.ModuleList(), nn.ModuleList()
@@ -52,7 +53,7 @@ class TaskSpecificAttention(SaveModel):
             tasks = torch.tensor([task] * batch_size, device=self.device)
             te = self.t_embedding(tasks).unsqueeze(-1)
             
-            x = lnorm_1(x)
+            # x = lnorm_1(x)
             # bs, seq, embed
             x, _ = mha(x, x, x)
             # bs, seq, hidden
@@ -63,7 +64,7 @@ class TaskSpecificAttention(SaveModel):
             weighted_attention = w * x
             x = self.dropout(weighted_attention)
             
-            x = lnorm_2(x)
+            # x = lnorm_2(x)
             # bs, seq, embed
             x = F.relu(linear_2(x))
 
