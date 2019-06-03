@@ -73,7 +73,6 @@ class TaskSpecificAttention(SaveModel):
             w = self.attention(x, te)
             h = w * x
             x = h 
-            print(w)
             # h = self.dropout(h)
 
             # # x = lnorm_2(x)
@@ -84,7 +83,7 @@ class TaskSpecificAttention(SaveModel):
         x = x.transpose(1, 2)
         maxpool, _ = torch.max(x, -1)
         y = torch.sigmoid(self.classify(maxpool)).squeeze()
-        # print(y)
+        print(y)
         
         return y
 
