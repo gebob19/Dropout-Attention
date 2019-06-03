@@ -56,12 +56,12 @@ class TaskSpecificAttention(SaveModel):
             # x = lnorm_1(x)
             # bs, seq, embed
             x, _ = mha(x, x, x)
+            print(x)
             # bs, seq, hidden
             x = linear_1(x)
             
             # task attention
             w = self.attention(x, te)
-            print(w)
             weighted_attention = w * x
             x = self.dropout(weighted_attention)
             
@@ -84,7 +84,7 @@ class TaskAttention(SaveModel):
     def forward(self, x, te):
         # task attention
         w = torch.bmm(x, te)
-        # w = torch.softmax(w.squeeze(-1), -1).unsqueeze(-1)
+        w = torch.softmax(w.squeeze(-1), -1).unsqueeze(-1)
         return w
 
 
