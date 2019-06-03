@@ -15,20 +15,20 @@ class SaveModel(nn.Module):
         }
         torch.save(params, path)
 
-
-class TaskSpecificAttention(SaveModel):
+class TaskSpecificAttention(nn.Module):
     def __init__(self, language, device, embed_dim, hidden_dim, num_embed, num_heads, num_layers, dropout, n_classes):
         super().__init__()
         self.device = device
         self.language = language
         
-        self.w_embedding = nn.Embedding(self.language.n_words, embed_dim)
+        self.w_embedding = nn.Embedding(lang.n_words, embed_dim)
         self.t_embedding = nn.Embedding(num_layers, hidden_dim)
         self.dropout = nn.Dropout(dropout)
         
         self.mhas, self.linear_1, self.linear_2 = nn.ModuleList(), nn.ModuleList(), nn.ModuleList()
         self.ln_1, self.ln_2 = nn.ModuleList(), nn.ModuleList()
         self.tasks = []
+        self.attention = TaskAttention()
         
         for i in range(num_layers):
             self.mhas.append(nn.MultiheadAttention(embed_dim, 1, dropout=dropout))
@@ -43,13 +43,13 @@ class TaskSpecificAttention(SaveModel):
         
     def forward(self, sents):
         batch_size = len(sents)
-        x, lengths = to_input_tensor(self.language, sents, self.device)
+        x, lengths = to_input_tensor(lang, sents, device)
         x = x.transpose(0, 1)
         # bs, seq, embed
         x = self.w_embedding(x)
 
         for task, mha, linear_1, linear_2, lnorm_1, lnorm_2 in zip(self.tasks, self.mhas, self.linear_1, self.linear_2, self.ln_1, self.ln_2):
-            tasks = torch.tensor([task] * batch_size, device=self.device)
+            tasks = torch.tensor([task] * batch_size)
             te = self.t_embedding(tasks).unsqueeze(-1)
             
             x = lnorm_1(x)
@@ -59,9 +59,8 @@ class TaskSpecificAttention(SaveModel):
             x = linear_1(x)
             
             # task attention
-            w = torch.bmm(x, te)
-            w = torch.softmax(w.squeeze(-1), -1).unsqueeze(-1)
-            weighted_attention = (w * x)
+            w = self.attention(x, te)
+            weighted_attention = w * x
             x = self.dropout(weighted_attention)
             
             x = lnorm_2(x)
@@ -72,7 +71,18 @@ class TaskSpecificAttention(SaveModel):
         x = x.transpose(1, 2)
         maxpool, _ = torch.max(x, -1)
         y = torch.sigmoid(self.classify(maxpool)).squeeze()
+        
         return y
+
+class TaskAttention(SaveModel):
+    def __init__(self):
+        super().__init__()
+        
+    def forward(self, x, te):
+        # task attention
+        w = torch.bmm(x, te)
+        w = torch.softmax(w.squeeze(-1), -1).unsqueeze(-1)
+        return w
 
 
 class RNN_Self_Attention_Classifier(SaveModel):
