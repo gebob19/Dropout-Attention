@@ -48,12 +48,12 @@ class TaskSpecificAttention(SaveModel):
             self.ln_1.append(nn.LayerNorm(embed_dim, eps=1e-12))
             self.ln_2.append(nn.LayerNorm(embed_dim, eps=1e-12))
         
-        # self.classify = nn.Linear(embed_dim, n_classes)
+        self.classify = nn.Linear(embed_dim, n_classes)
 
         self.h1 = nn.Linear(self.final_dim, hidden_dim)
         self.h2 = nn.Linear(hidden_dim, hidden_dim)
         self.h3 = nn.Linear(hidden_dim, 1)
-        self.classify = nn.Linear(hidden_dim, n_classes)
+        # self.classify = nn.Linear(hidden_dim, n_classes)
         
     def forward(self, sents):
         batch_size = len(sents)
@@ -103,7 +103,7 @@ class TaskSpecificAttention(SaveModel):
         # y = torch.sigmoid(self.classify(x)).squeeze()
 
         m, _ = torch.max(x, -1)
-        y = torch.sigmoid(self.classify(m)).squeeze()
+        y = F.tanh(self.classify(m)).squeeze()
         
         return y
 
