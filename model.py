@@ -82,7 +82,7 @@ class TaskAttention(SaveModel):
     def forward(self, x, te):
         # task attention
         w = torch.bmm(x, te)
-        w = torch.softmax(w.squeeze(-1), -1).unsqueeze(-1)
+        # w = torch.softmax(w.squeeze(-1), -1).unsqueeze(-1)
         return w
 
 
