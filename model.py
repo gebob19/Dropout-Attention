@@ -104,7 +104,7 @@ class TaskSpecificAttention(SaveModel):
 
         m = torch.mean(x, -1)
         y = torch.sigmoid(self.classify(m)).squeeze()
-        print(y)
+        # print(y)
         
         return y
 
