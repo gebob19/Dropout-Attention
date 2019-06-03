@@ -62,7 +62,7 @@ class TaskSpecificAttention(SaveModel):
         x, lengths = to_input_tensor(self.language, sents, self.device)
         x = x.transpose(0, 1)
         # bs, seq, embed
-        x = self.w_embedding(x)
+        h = self.w_embedding(x)
 
         for task, mha, linear_1, linear_2, feed_forward, lnorm_1, lnorm_2, lnorm_3 in zip(self.tasks, self.mhas, self.linear_1, self.linear_2, self.ff, self.ln_1, self.ln_2, self.ln_3):
             tasks = torch.tensor([task] * batch_size, device=self.device)
@@ -87,7 +87,7 @@ class TaskSpecificAttention(SaveModel):
         
             # task attention
             w = self.attention(h, te)
-            x = 10 * w * x
+            x = 10 * w * h
             h = x + h
             h = lnorm_3(h)
             # print("After Attention")
