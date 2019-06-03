@@ -89,22 +89,21 @@ class TaskSpecificAttention(SaveModel):
         # bs, embed, seq
         x = x.transpose(1, 2)
 
-        # pool + padding
-        p = self.maxpool(x)
-        diff = self.final_dim - p.size(-1)
-        pad = torch.zeros((p.size(0), p.size(1), diff), device=self.device)
-        pad.require_grad = False
-        x = torch.cat([p, pad], -1)
+        # # pool + padding
+        # p = self.maxpool(x)
+        # diff = self.final_dim - p.size(-1)
+        # pad = torch.zeros((p.size(0), p.size(1), diff), device=self.device)
+        # pad.require_grad = False
+        # x = torch.cat([p, pad], -1)
 
-        # classification layers
-        x = F.relu(self.h1(x))
-        x = F.relu(self.h2(x))
-        x = self.h3(x.transpose(-1, -2)).squeeze()
-        y = torch.sigmoid(self.classify(x)).squeeze()
+        # # classification layers
+        # x = F.relu(self.h1(x))
+        # x = F.relu(self.h2(x))
+        # x = self.h3(x.transpose(-1, -2)).squeeze()
+        # y = torch.sigmoid(self.classify(x)).squeeze()
 
-        # -- THIS MAY BE THE SHITTER
-        # maxpool, _ = torch.mean(x, -1)
-        # y = torch.sigmoid(self.classify(maxpool)).squeeze()
+        m = torch.mean(x, -1)
+        y = torch.sigmoid(self.classify(m)).squeeze()
         print(y)
         
         return y
