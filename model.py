@@ -33,7 +33,7 @@ class TaskSpecificAttention(SaveModel):
         self.tasks = []
         self.attention = TaskAttention()
         self.maxpool = nn.MaxPool1d(8)
-        self.ln3 = nn.LayerNorm(hidden_dim, eps=1e-12)
+        self.ln3 = nn.BatchNorm1d(hidden_dim, eps=1e-12)
         
         for i in range(num_layers):
             self.mhas.append(nn.MultiheadAttention(embed_dim, num_heads, dropout=dropout))
