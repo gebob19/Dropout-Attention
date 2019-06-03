@@ -27,6 +27,7 @@ class TaskSpecificAttention(SaveModel):
         self.dropout = nn.Dropout(dropout)
         
         self.mhas, self.linear_1, self.linear_2 = nn.ModuleList(), nn.ModuleList(), nn.ModuleList()
+        self.ff = nn.ModuleList()
         self.ln_1, self.ln_2 = nn.ModuleList(), nn.ModuleList()
         self.tasks = []
         self.attention = TaskAttention()
@@ -35,6 +36,11 @@ class TaskSpecificAttention(SaveModel):
             self.mhas.append(nn.MultiheadAttention(embed_dim, num_heads, dropout=dropout))
             self.linear_1.append(nn.Linear(embed_dim, hidden_dim))
             self.linear_2.append(nn.Linear(hidden_dim, embed_dim))
+            self.ff.append(nn.Sequential(nn.Linear(embed_dim, hidden_dim),
+                                                    nn.ReLU(), 
+                                                    nn.Linear(hidden_dim, hidden_dim),
+                                                    nn.ReLU(),
+                                                    nn.Linear(hidden_dim, hidden_dim)))
             self.tasks.append(i)
             
             self.ln_1.append(nn.LayerNorm(embed_dim, eps=1e-12))
@@ -49,26 +55,28 @@ class TaskSpecificAttention(SaveModel):
         # bs, seq, embed
         x = self.w_embedding(x)
 
-        for task, mha, linear_1, linear_2, lnorm_1, lnorm_2 in zip(self.tasks, self.mhas, self.linear_1, self.linear_2, self.ln_1, self.ln_2):
+        for task, mha, linear_1, linear_2, feed_forward, lnorm_1, lnorm_2 in zip(self.tasks, self.mhas, self.linear_1, self.linear_2, self.ff, self.ln_1, self.ln_2):
             tasks = torch.tensor([task] * batch_size, device=self.device)
-            print(tasks)
             te = self.t_embedding(tasks).unsqueeze(-1)
             
-            # x = lnorm_1(x)
             # bs, seq, embed
+            x = lnorm_1(x)
             h, _ = mha(x, x, x)
             x = h + x
-            # # bs, seq, hidden    
-            # x = F.relu(linear_1(x))
+            
+            # bs, seq, hidden    
+            h = layer_norm2(h)
+            x = feed_forward(h)
+            x = self.dropout(x)
         
             # task attention
             w = self.attention(x, te)
             h = w * x
-            h = self.dropout(h)
-            x = h + x
+            x = h
+            # h = self.dropout(h)
 
-            # x = lnorm_2(x)
-            # bs, seq, embed
+            # # x = lnorm_2(x)
+            # # bs, seq, embed
             x = F.relu(linear_2(x))
 
         # bs, embed, seq
