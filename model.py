@@ -23,7 +23,7 @@ class TaskSpecificAttention(SaveModel):
         self.final_dim = 100
         
         self.w_embedding = nn.Embedding(self.language.n_words, embed_dim)
-        self.t_embedding = nn.Embedding(num_layers, hidden_dim)
+        self.t_embedding = nn.Embedding(num_layers, embed_dim)
 
         self.dropout = nn.Dropout(dropout)
         
@@ -43,7 +43,7 @@ class TaskSpecificAttention(SaveModel):
                                                     nn.ReLU(), 
                                                     nn.Linear(hidden_dim, hidden_dim),
                                                     nn.ReLU(),
-                                                    nn.Linear(hidden_dim, hidden_dim)))
+                                                    nn.Linear(hidden_dim, embed_dim)))
             self.tasks.append(i)
             
             self.ln_1.append(nn.LayerNorm(embed_dim, eps=1e-12))
@@ -97,7 +97,7 @@ class TaskSpecificAttention(SaveModel):
 
             # # x = lnorm_2(x)
             # bs, seq, embed
-            x = F.relu(linear_2(x))
+            # x = F.relu(linear_2(x))
             # print("After Linear 2 + RELU")
             # (0.056 mean, 0.0097 var)
             # print(torch.mean(x), torch.var(x))
