@@ -34,13 +34,13 @@ class TaskSpecificAttention(SaveModel):
         for i in range(num_layers):
             self.mhas.append(nn.MultiheadAttention(embed_dim, 1, dropout=dropout))
             self.linear_1.append(nn.Linear(embed_dim, hidden_dim))
-            self.linear_2.append(nn.Linear(hidden_dim, embed_dim))
+            self.linear_2.append(nn.Linear(hidden_dim, hidden_dim))
             self.tasks.append(i)
             
             self.ln_1.append(nn.LayerNorm(embed_dim, eps=1e-12))
             self.ln_2.append(nn.LayerNorm(hidden_dim, eps=1e-12))
         
-        self.classify = nn.Linear(embed_dim, n_classes)
+        self.classify = nn.Linear(hidden_dim, n_classes)
         
     def forward(self, sents):
         batch_size = len(sents)
