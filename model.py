@@ -55,8 +55,7 @@ class TaskSpecificAttention(SaveModel):
             
             # x = lnorm_1(x)
             # bs, seq, embed
-            h, _ = mha(x, x, x)
-            x = h + x
+            x, _ = mha(x, x, x)
             # bs, seq, hidden    
             x = F.relu(linear_1(x))
         
