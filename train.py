@@ -208,7 +208,7 @@ def train(args):
         hidden_size = int(args['--hidden-size'])
         embed_size = int(args['--embed-size'])
 
-        model = TaskSpecificAttention(lang, device, embed_size, hidden_size, lang.n_words, n_heads, n_layers, float(args['--dropout']), 1)
+        model = TaskSpecificAttention(lang, device, embed_size, hidden_size, max_sentence_len, lang.n_words, n_heads, n_layers, float(args['--dropout']), 1)
 
         # model = TransformerClassifier(language=lang, device=device,
         #                               embed_dim=embed_size, 

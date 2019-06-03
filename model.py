@@ -16,13 +16,15 @@ class SaveModel(nn.Module):
         torch.save(params, path)
 
 class TaskSpecificAttention(SaveModel):
-    def __init__(self, language, device, embed_dim, hidden_dim, num_embed, num_heads, num_layers, dropout, n_classes):
+    def __init__(self, language, device, embed_dim, hidden_dim, num_pos, num_embed, num_heads, num_layers, dropout, n_classes):
         super().__init__()
         self.device = device
         self.language = language
         self.final_dim = 100
         
         self.w_embedding = nn.Embedding(self.language.n_words, embed_dim)
+        self.pos_embeddings = nn.Embedding(num_pos, embed_dim)
+
         self.t_embedding = nn.Embedding(num_layers, embed_dim)
         self.t_embedding.requires_grad = False
 
@@ -60,9 +62,13 @@ class TaskSpecificAttention(SaveModel):
         
     def forward(self, sents):
         batch_size = len(sents)
-        x, lengths = to_input_tensor(self.language, sents, self.device)
-        x = x.transpose(0, 1)
-        # bs, seq, embed
+        x, _ = to_input_tensor(self.language, sents, self.device)
+        positions = torch.arange(len(x), device=x.device).unsqueeze(-1)
+        h = h + self.pos_embeddings(positions).expand_as(h)
+        h = self.dropout(h)
+
+        # x = x.transpose(0, 1)
+        # seq, bs, embed
         h = self.w_embedding(x)
 
         for task, mha, linear_1, linear_2, feed_forward, lnorm_1, lnorm_2, lnorm_3 in zip(self.tasks, self.mhas, self.linear_1, self.linear_2, self.ff, self.ln_1, self.ln_2, self.ln_3):
@@ -93,7 +99,7 @@ class TaskSpecificAttention(SaveModel):
             h = x + h
             h = lnorm_3(h)
 
-            h = h + top
+            # h = h + top
             # print("After Attention")
             # (-0.007 mean, 0.0218 var)
             # print(torch.mean(x), torch.var(x))
@@ -106,8 +112,8 @@ class TaskSpecificAttention(SaveModel):
             # (0.056 mean, 0.0097 var)
             # print(torch.mean(x), torch.var(x))
 
-        # bs, embed, seq
-        x = x.transpose(1, 2)
+        # bs, sent_len, embed_dim
+        h = h.transpose(0, 1)
 
         # # pool + padding
         # p = self.maxpool(x)
@@ -122,7 +128,7 @@ class TaskSpecificAttention(SaveModel):
         # x = self.h3(x.transpose(-1, -2)).squeeze()
         # y = torch.sigmoid(self.classify(x)).squeeze()
 
-        m, _ = torch.max(x, -1)
+        m, _ = torch.max(h, -1)
         y = torch.sigmoid(self.classify(m)).squeeze()
         
         return y
