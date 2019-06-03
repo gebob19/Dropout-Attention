@@ -124,6 +124,8 @@ def load(path, cpu=False):
     #                                   num_embed=lang.n_words,
     #                                   n_classes=1)
     optimizer = torch.optim.Adam(model.parameters())
+    if device == 'cuda':
+        optimizer = optimizer.cuda()
     
     model.load_state_dict(model_checkpoint['state_dict'])
     optimizer.load_state_dict(optim_checkpoint)
@@ -199,7 +201,6 @@ def train(args):
     if args['--load']:
         model, optimizer, lang, metrics = load(args['--load-from'])
         model = model.to(device)
-        optimizer = optimizer.to(device)
         print('model loaded...')
     else: 
         lang = load_model()
