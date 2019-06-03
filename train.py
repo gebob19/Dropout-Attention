@@ -200,7 +200,6 @@ def train(args):
         hidden_size = int(args['--hidden-size'])
         embed_size = int(args['--embed-size'])
 
-
         model = TaskSpecificAttention(lang, device, embed_size, hidden_size, lang.n_words, n_heads, n_layers, float(args['--dropout']), 1)
 
         # model = TransformerClassifier(language=lang, device=device,
@@ -264,7 +263,7 @@ def train(args):
                 train_iter += 1 
                 optimizer.zero_grad()
                 
-                preds = model(sents, [0] * len(targets))
+                preds = model(sents)
                 loss = loss_fcn(preds, targets)
                 epoch_loss += loss.item()
                 
@@ -285,9 +284,9 @@ def train(args):
                     n_examples = n_correct = b_val_loss = 0
 
                     with torch.no_grad():
-                        # test_df = test_df.sample(frac=1.)
+                        test_df = test_df.sample(frac=1.)
                         for val_sents, val_targets in batch_iter(lang, test_df[:n_valid], train_batch_size, max_sentence_len):
-                            val_preds = model(val_sents, [0] * len(targets))
+                            val_preds = model(val_sents)
                             batch_n_correct = accuracy(val_preds, val_targets)
                             vloss = loss_fcn(val_preds, val_targets)
 
