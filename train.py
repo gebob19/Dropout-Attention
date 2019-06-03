@@ -126,6 +126,7 @@ def load(path, cpu=False):
     optimizer = torch.optim.Adam(model.parameters())
     if device == 'cuda':
         optimizer = optimizer.cuda()
+        print('Optim to cuda...')
     
     model.load_state_dict(model_checkpoint['state_dict'])
     optimizer.load_state_dict(optim_checkpoint)
