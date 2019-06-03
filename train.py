@@ -124,12 +124,10 @@ def load(path, cpu=False):
     #                                   num_embed=lang.n_words,
     #                                   n_classes=1)
     optimizer = torch.optim.Adam(model.parameters())
-    if torch.cuda.is_available():
-        optimizer = optimizer.cuda()
-        print('Optim to cuda...')
     
     model.load_state_dict(model_checkpoint['state_dict'])
-    optimizer.load_state_dict(optim_checkpoint)
+    # optimizer.load_state_dict(optim_checkpoint)
+    optimizer = torch.optim.Adam(model.parameters(), lr=float(metrics['args']['--lr']))
 
     return model, optimizer, lang, metrics
 
