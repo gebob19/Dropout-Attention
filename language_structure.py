@@ -50,10 +50,10 @@ class Lang:
             top_lang.addWord(w)
             top_lang.word2count[w] = f 
             
-            # retain id to word for consistent embeddings
-            # id = self.word2id[w]
-            # top_lang.word2id[w] = id
-            # top_lang.id2word[id] = w
+            # retain id to word for consistent embeddings - Glove Embeddings
+            id = self.word2id[w]
+            top_lang.word2id[w] = id
+            top_lang.id2word[id] = w
 
         return top_lang
     
