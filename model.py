@@ -37,7 +37,7 @@ class TaskSpecificAttention(SaveModel):
         self.final_dim = 100
         
         # self.w_embedding = nn.Embedding(self.language.n_words, embed_dim)
-        self.w_embedding = glove_embeddings(trainable=False)
+        self.w_embedding = glove_embeddings(trainable=True)
         embed_dim = 300
 
         self.pos_embeddings = nn.Embedding(num_pos, embed_dim)
@@ -93,16 +93,16 @@ class TaskSpecificAttention(SaveModel):
         h = self.dropout(h)
 
         for task, mha, linear_1, linear_2, feed_forward, lnorm_1, lnorm_2, lnorm_3 in zip(self.tasks, self.mhas, self.linear_1, self.linear_2, self.ff, self.ln_1, self.ln_2, self.ln_3):
-            # tasks = torch.tensor([task] * batch_size, device=self.device)
-            # ff_tasks = torch.tensor([task] * batch_size, device=self.device)
+            tasks = torch.tensor([task] * batch_size, device=self.device)
+            ff_tasks = torch.tensor([task] * batch_size, device=self.device)
 
-            # te = self.t_embedding(tasks).unsqueeze(-1)
-            # ffe = self.ff_embedding(ff_tasks).unsqueeze(-1)
+            te = self.t_embedding(tasks).unsqueeze(-1)
+            ffe = self.ff_embedding(ff_tasks).unsqueeze(-1)
              
             # seq, bs, embed
             x, _ = mha(h, h, h)
             # x = self.weight1 * x * self.attention(x, te)
-            # x = self.weight1 * x * self.attention(w_embed, te)
+            x = self.weight1 * x * self.attention(w_embed, te)
             # x = self.weight1 * self.attention(x, te)
             # x = self.attention(w_embed, te) + self.attention(x, te)
             h = x + h
@@ -113,7 +113,7 @@ class TaskSpecificAttention(SaveModel):
             x = self.dropout(x)
 
             # x = self.weight2 * x * self.attention(x, ffe)
-            # x = self.weight2 * x * self.attention(w_embed, ffe)
+            x = self.weight2 * x * self.attention(w_embed, ffe)
             # x = self.weight2 * self.attention(x, ffe)
             # x = self.attention(w_embed, ffe) + self.attention(x, ffe) * x
             h = x + h
