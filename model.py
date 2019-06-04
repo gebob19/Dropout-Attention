@@ -1,4 +1,6 @@
 import torch
+
+import numpy as np 
 import torch.nn as nn
 import torch.nn.functional as F
 
@@ -15,6 +17,18 @@ class SaveModel(nn.Module):
         }
         torch.save(params, path)
 
+def glove_embeddings(trainable):
+    with open('./glove/imdb_weights.pkl', 'rb') as f:
+        weights_matrix = np.load(f, allow_pickle=True)
+    mtrx = torch.tensor(weights_matrix)
+    
+    embedding = nn.Embedding(mtrx.size(0), 300)
+    embedding.load_state_dict({'weight': mtrx})
+    
+    if not trainable:
+        embedding.requires_grad = False
+    return embedding
+
 class TaskSpecificAttention(SaveModel):
     def __init__(self, language, device, embed_dim, hidden_dim, num_pos, num_embed, num_heads, num_layers, dropout, n_classes):
         super().__init__()
@@ -22,7 +36,10 @@ class TaskSpecificAttention(SaveModel):
         self.language = language
         self.final_dim = 100
         
-        self.w_embedding = nn.Embedding(self.language.n_words, embed_dim)
+        # self.w_embedding = nn.Embedding(self.language.n_words, embed_dim)
+        self.w_embedding = glove_embeddings(trainable=False)
+        embed_dim = 300
+
         self.pos_embeddings = nn.Embedding(num_pos, embed_dim)
 
         self.t_embedding = nn.Embedding(num_layers, embed_dim)
@@ -81,7 +98,6 @@ class TaskSpecificAttention(SaveModel):
             te = self.t_embedding(tasks).unsqueeze(-1)
             ffe = self.ff_embedding(ff_tasks).unsqueeze(-1)
              
-            # top = h
             # seq, bs, embed
             x, _ = mha(h, h, h)
             x = self.weight1 * x * self.attention(x, te)
@@ -97,19 +113,6 @@ class TaskSpecificAttention(SaveModel):
 
         # bs, seq, embed_dim
         h = h.transpose(0, 1)
-
-        # # pool + padding
-        # p = self.maxpool(x)
-        # diff = self.final_dim - p.size(-1)
-        # pad = torch.zeros((p.size(0), p.size(1), diff), device=self.device)
-        # pad.require_grad = False
-        # x = torch.cat([p, pad], -1)
-
-        # classification layers
-        # x = F.relu(self.h1(x))
-        # x = F.relu(self.h2(x))
-        # x = self.h3(x.transpose(-1, -2)).squeeze()
-        # y = torch.sigmoid(self.classify(x)).squeeze()
 
         m, _ = torch.max(h, -2)
         y = torch.sigmoid(self.classify(m)).squeeze()
