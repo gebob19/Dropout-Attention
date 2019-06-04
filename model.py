@@ -32,6 +32,10 @@ class TaskSpecificAttention(SaveModel):
         self.t_embedding.requires_grad = False
 
         self.dropout = nn.Dropout(dropout)
+        self.weight1 = torch.tensor([[1]])
+        self.weight2 = torch.tensor([[1]])
+        self.weight1.requires_grad = True
+        self.weight2.requires_grad = True
         
         self.mhas, self.linear_1, self.linear_2 = nn.ModuleList(), nn.ModuleList(), nn.ModuleList()
         self.ff = nn.ModuleList()
@@ -82,39 +86,16 @@ class TaskSpecificAttention(SaveModel):
             # top = h
             # seq, bs, embed
             x, _ = mha(h, h, h)
-            # task attention
-            x = 10 * x * self.attention(x, te)
-            # h = x + h
-            h = lnorm_1(x)
-            # print(h.shape)
-            # print("After Multihead Attention")
-            # (-0.007 mean, 1.5 var)
-            # print(torch.mean(x), torch.var(x))
+            x = self.weight1 * x * self.attention(x, te)
+            h = x + h
+            h = lnorm_1(h)
             
             # seq, bs, embed
             x = feed_forward(h)
             x = self.dropout(x)
-            # feed forward attention
-            x = 10 * x * self.attention(x, ffe)
-            # h = x + h
-            h = lnorm_2(x)
-            # print(h.shape)
-            # print("After FF")
-            # very close to zero now (0.12 mean, 0.13 var)
-            # print(torch.mean(x), torch.var(x))
-
-            # h = h + top
-            # print("After Attention")
-            # (-0.007 mean, 0.0218 var)
-            # print(torch.mean(x), torch.var(x))
-            # h = self.dropout(h)
-
-            # # x = lnorm_2(x)
-            # bs, seq, embed
-            # x = F.relu(linear_2(x))
-            # print("After Linear 2 + RELU")
-            # (0.056 mean, 0.0097 var)
-            # print(torch.mean(x), torch.var(x))
+            x = self.weight2 * x * self.attention(x, ffe)
+            h = x + h
+            h = lnorm_2(h)
 
         # bs, seq, embed_dim
         h = h.transpose(0, 1)
