@@ -36,7 +36,7 @@ class TaskSpecificAttention(SaveModel):
         self.language = language
         self.final_dim = 100
         
-        self.w_embedding = nn.Embedding(self.language, embed_dim)
+        self.w_embedding = nn.Embedding(self.language.n_words, embed_dim)
         # self.w_embedding = glove_embeddings(trainable=False)
         # embed_dim = 300
 
