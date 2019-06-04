@@ -327,8 +327,7 @@ def train(args):
                     n_examples = n_correct = b_val_loss = 0
 
                     with torch.no_grad():
-                        test_df = test_df.sample(frac=1.)
-                        for val_sents, val_targets in batch_iter(lang, test_df[:n_valid], train_batch_size, max_sentence_len):
+                        for i, (val_sents, val_targets) in enumerate(batch_iter(lang, test_df, train_batch_size, max_sentence_len)):
                             val_preds = model(val_sents)
                             batch_n_correct = accuracy(val_preds, val_targets)
                             vloss = loss_fcn(val_preds, val_targets)
@@ -336,6 +335,8 @@ def train(args):
                             b_val_loss += vloss.item()
                             n_correct += batch_n_correct
                             n_examples += train_batch_size
+
+                            if i > 1: break
 
                     if n_examples:
                         val_acc = n_correct / n_examples
@@ -358,7 +359,7 @@ def train(args):
 
                 if train_iter % int(args['--log-every']) == 0:
                     # track metrics
-                    loss_m.append(round(loss.item() / len(targets), 4))
+                    loss_m.append(round(epoch_loss / train_iter, 4))
                     accuracy_m.append(total_correct / total_examples)
                     train_itrs.append(train_iter)
                     epoch_track.append(e)
@@ -367,7 +368,7 @@ def train(args):
                     print(('epoch %d, train itr %d, avg. loss %.2f, '
                             'train accuracy: %.2f, val loss %.2f, val acc %.2f '
                             'time elapsed %.2f sec') % (e, train_iter,
-                            epoch_loss / train_iter, accuracy_m[-1],
+                            loss_m[-1], accuracy_m[-1],
                             val_loss_m[-1], val_accuracy_m[-1],
                             time.time() - begin_time), file=sys.stderr)
                     torch.cuda.empty_cache()
