@@ -25,8 +25,8 @@ def glove_embeddings(trainable):
     embedding = nn.Embedding(mtrx.size(0), 300)
     embedding.load_state_dict({'weight': mtrx})
     
-    if not trainable:
-        embedding.requires_grad = False
+    # if not trainable:
+    #     embedding.requires_grad = False
     return embedding
 
 class TaskSpecificAttention(SaveModel):
