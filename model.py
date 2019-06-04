@@ -84,8 +84,8 @@ class TaskSpecificAttention(SaveModel):
             x, _ = mha(h, h, h)
             # task attention
             x = 10 * x * self.attention(x, te)
-            h = x + h
-            h = lnorm_1(h)
+            # h = x + h
+            h = lnorm_1(x)
             # print(h.shape)
             # print("After Multihead Attention")
             # (-0.007 mean, 1.5 var)
@@ -96,8 +96,8 @@ class TaskSpecificAttention(SaveModel):
             x = self.dropout(x)
             # feed forward attention
             x = 10 * x * self.attention(x, ffe)
-            h = x + h
-            h = lnorm_2(h)
+            # h = x + h
+            h = lnorm_2(x)
             # print(h.shape)
             # print("After FF")
             # very close to zero now (0.12 mean, 0.13 var)
