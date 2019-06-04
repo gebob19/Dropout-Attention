@@ -37,7 +37,7 @@ class TaskSpecificAttention(SaveModel):
         self.final_dim = 100
         
         # self.w_embedding = nn.Embedding(self.language.n_words, embed_dim)
-        self.w_embedding = glove_embeddings(trainable=True)
+        self.w_embedding = glove_embeddings(trainable=False)
         embed_dim = 300
 
         self.pos_embeddings = nn.Embedding(num_pos, embed_dim)
@@ -45,8 +45,8 @@ class TaskSpecificAttention(SaveModel):
         self.t_embedding = nn.Embedding(num_layers, embed_dim)
         self.ff_embedding = nn.Embedding(num_layers, embed_dim)
 
-        self.ff_embedding.requires_grad = False
-        self.t_embedding.requires_grad = False
+        # self.ff_embedding.requires_grad = False
+        # self.t_embedding.requires_grad = False
 
         self.dropout = nn.Dropout(dropout)
         self.weight1 = nn.Parameter(torch.tensor([[1.]], requires_grad=True))
