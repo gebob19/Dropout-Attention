@@ -32,10 +32,8 @@ class TaskSpecificAttention(SaveModel):
         self.t_embedding.requires_grad = False
 
         self.dropout = nn.Dropout(dropout)
-        self.weight1 = torch.tensor([[1]])
-        self.weight2 = torch.tensor([[1]])
-        self.weight1.requires_grad = True
-        self.weight2.requires_grad = True
+        self.weight1 = nn.Parameter(torch.tensor([[1.]], requires_grad=True))
+        self.weight2 = nn.Parameter(torch.tensor([[1.]], requires_grad=True))
         
         self.mhas, self.linear_1, self.linear_2 = nn.ModuleList(), nn.ModuleList(), nn.ModuleList()
         self.ff = nn.ModuleList()
