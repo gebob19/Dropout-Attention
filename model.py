@@ -87,7 +87,8 @@ class TaskSpecificAttention(SaveModel):
         x, _ = to_input_tensor(self.language, sents, self.device)
 
         positions = torch.arange(len(x), device=x.device).unsqueeze(-1)
-        h = self.w_embedding(x)
+        w_embed = self.w_embedding(x)
+        h = w_embed + self.pos_embeddings(positions).expand_as(w_embed)
         h = h + self.pos_embeddings(positions).expand_as(h)
         h = self.dropout(h)
 
@@ -100,14 +101,14 @@ class TaskSpecificAttention(SaveModel):
              
             # seq, bs, embed
             x, _ = mha(h, h, h)
-            x = self.weight1 * x * self.attention(x, te)
+            x = self.weight1 * x * self.attention(w_embed, te)
             h = x + h
             h = lnorm_1(h)
             
             # seq, bs, embed
             x = feed_forward(h)
             x = self.dropout(x)
-            x = self.weight2 * x * self.attention(x, ffe)
+            x = self.weight2 * x * self.attention(w_embed, ffe)
             h = x + h
             h = lnorm_2(h)
 
