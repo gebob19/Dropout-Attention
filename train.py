@@ -38,6 +38,7 @@ import torch
 import time
 import pprint
 import os
+import random
 
 import pandas as pd
 import numpy as np
@@ -61,22 +62,55 @@ def batch_iter(lang, data, batch_size, max_sentence_len, shuffle=False):
 
     if shuffle:
         data = data.sample(frac=1.)
-    
-    for i in range(batch_num):
-        # consistent batch sizes
-        if min((i + 1) * batch_size, len(data)) == len(data): break
 
-        lb, ub = i * batch_size, min((i + 1) * batch_size, len(data))
-        batch_df = data[lb:ub]
+    n, count = 10, -1
+    tmpdf = data.copy()
+    
+    while len(tmpdf) > batch_size:
+        count += 1
+        # grab first row
+        (_, _, _, length) = tmpdf.values[0]
+        lb, ub = length - n, length + n
+
+        # find similar lengthed files
+        file_lengths = tmpdf.file_length.values
+        fl_idxs = tmpdf.file_length.index
+        idxs = [i for i, fl in zip(fl_idxs, file_lengths) if (fl >= lb and fl <= ub)]
+
+        if len(idxs) < 8 and count > 10: break
         
-        # open, clean, sort the batch_df
-        results = prepare_df(lang, batch_df, base)
+        # shuffle & get batch
+        random.shuffle(idxs)
+        idxs = idxs[:batch_size] if len(idxs) > batch_size else idxs
+        batchdf = tmpdf.loc[idxs]
+        
+        # remove selected batch rows from main df
+        tmpdf = tmpdf[~tmpdf.index.isin(batchdf.index)]
+        
+        # open, clean, index txt files 
+        results = prepare_df(lang, batchdf, base)
         results = sorted(results, key=lambda e: len(e[0].split(' ')), reverse=True)
         sents, targets = [e[0].split(' ') for e in results], [e[1] for e in results]
 
         sents = clip_sents(sents, max_sentence_len)
         
-        yield sents, torch.tensor(targets, dtype=torch.float32, device=device)
+        yield sents, torch.tensor(targets, dtype=torch.float32, device=device).squeeze()
+    
+    # for i in range(batch_num):
+    #     # consistent batch sizes
+    #     if min((i + 1) * batch_size, len(data)) == len(data): break
+
+    #     lb, ub = i * batch_size, min((i + 1) * batch_size, len(data))
+    #     batch_df = data[lb:ub]
+        
+    #     # open, clean, sort the batch_df
+    #     results = prepare_df(lang, batch_df, base)
+    #     results = sorted(results, key=lambda e: len(e[0].split(' ')), reverse=True)
+    #     sents, targets = [e[0].split(' ') for e in results], [e[1] for e in results]
+
+    #     sents = clip_sents(sents, max_sentence_len)
+        
+    #     yield sents, torch.tensor(targets, dtype=torch.float32, device=device)
 
 
 def accuracy(preds, targets, threshold=torch.tensor([0.5], device=device)):
@@ -105,18 +139,18 @@ def load(path, cpu=False):
     train_batch_size =  int(metrics['args']['--batch-size'])
     dropout =  float(metrics['args']['--dropout'])
 
-    # model = TaskSpecificAttention(lang, device, embed_size, hidden_size, lang.n_words, n_heads, n_layers, dropout, 1)
+    model = TaskSpecificAttention(lang, device, embed_size, hidden_size, max_sentence_len, lang.n_words, n_heads, n_layers, dropout, 1)
 
-    model = TransformerClassifier(language=lang, 
-                                    device=device,
-                                    embed_dim=embed_size, 
-                                    hidden_dim=hidden_size,
-                                    num_embed=lang.n_words,
-                                    num_pos=max_sentence_len, 
-                                    num_heads=n_heads,
-                                    num_layers=n_layers,
-                                    dropout=dropout,
-                                    n_classes=1)
+    # model = TransformerClassifier(language=lang, 
+    #                                 device=device,
+    #                                 embed_dim=embed_size, 
+    #                                 hidden_dim=hidden_size,
+    #                                 num_embed=lang.n_words,
+    #                                 num_pos=max_sentence_len, 
+    #                                 num_heads=n_heads,
+    #                                 num_layers=n_layers,
+    #                                 dropout=dropout,
+    #                                 n_classes=1)
     # model = RNN_Self_Attention_Classifier(language=lang, device=device,
     #                                   batch_size=train_batch_size,
     #                                   embed_dim=embed_size, 
@@ -195,7 +229,7 @@ def train(args):
     # test_df = test_df[test_df.file_length > 200]
     # train_df = train_df[train_df.file_length < max_sentence_len]
     # test_df = test_df[test_df.file_length < max_sentence_len]
-    print(len(train_df), len(test_df))
+    print("Length of (Train, Test) : ({}, {})".format(len(train_df), len(test_df)))
 
     if args['--load']:
         model, optimizer, lang, metrics = load(args['--load-from'])
@@ -272,6 +306,7 @@ def train(args):
                 optimizer.zero_grad()
                 
                 preds = model(sents)
+                
                 loss = loss_fcn(preds, targets)
                 epoch_loss += loss.item()
                 
@@ -302,19 +337,23 @@ def train(args):
                             n_correct += batch_n_correct
                             n_examples += train_batch_size
 
-                    val_acc = n_correct / n_examples
-                    val_loss = b_val_loss / n_examples
+                    if n_examples:
+                        val_acc = n_correct / n_examples
+                        val_loss = b_val_loss / n_examples
 
-                    is_better = len(val_accuracy_m) == 0 or val_acc > max(val_accuracy_m)
-                    val_loss_m.append(round(val_loss / n_examples, 5))
-                    val_accuracy_m.append(val_acc)
+                        is_better = len(val_accuracy_m) == 0 or val_acc > max(val_accuracy_m)
+                        val_loss_m.append(round(val_loss / n_examples, 5))
+                        val_accuracy_m.append(val_acc)
 
-                    if is_better: 
-                        if args['--save']:
-                            print('save currently the best model to [%s]' % model_save_path, file=sys.stderr)
-                            save(model_save_path, get_metrics(), model, optimizer)
-                        else:
-                            print("Saving not enabeled...")
+                        if is_better: 
+                            if args['--save']:
+                                print('save currently the best model to [%s]' % model_save_path, file=sys.stderr)
+                                save(model_save_path, get_metrics(), model, optimizer)
+                            else:
+                                print("Saving not enabeled...")
+                    else:
+                        print("Warning: division by zero in validation avoided", file=sys.stderr)
+
                     model.train()
 
                 if train_iter % int(args['--log-every']) == 0:

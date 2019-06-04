@@ -113,7 +113,6 @@ class TaskSpecificAttention(SaveModel):
 
         m, _ = torch.max(h, -2)
         y = torch.sigmoid(self.classify(m)).squeeze()
-        
         return y
 
 class TaskAttention(SaveModel):
