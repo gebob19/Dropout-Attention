@@ -36,9 +36,9 @@ class TaskSpecificAttention(SaveModel):
         self.language = language
         self.final_dim = 100
         
-        self.w_embedding = nn.Embedding(self.language.n_words, embed_dim)
-        # self.w_embedding = glove_embeddings(trainable=True)
-        # embed_dim = 300
+        # self.w_embedding = nn.Embedding(self.language.n_words, embed_dim)
+        self.w_embedding = glove_embeddings(trainable=True)
+        embed_dim = 300
 
         self.pos_embeddings = nn.Embedding(num_pos, embed_dim)
 
@@ -101,14 +101,16 @@ class TaskSpecificAttention(SaveModel):
              
             # seq, bs, embed
             x, _ = mha(h, h, h)
-            x = self.weight1 * x * self.attention(w_embed, te)
+            # x = self.weight1 * x * self.attention(x, te)
+            x = self.attention(x, te)
             h = x + h
             h = lnorm_1(h)
             
             # seq, bs, embed
             x = feed_forward(h)
             x = self.dropout(x)
-            x = self.weight2 * x * self.attention(w_embed, ffe)
+            # x = self.weight2 * x * self.attention(x, ffe)
+            x = self.attention(x, ffe)
             h = x + h
             h = lnorm_2(h)
 
