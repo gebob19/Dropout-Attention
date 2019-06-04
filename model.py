@@ -27,6 +27,8 @@ class TaskSpecificAttention(SaveModel):
 
         self.t_embedding = nn.Embedding(num_layers, embed_dim)
         self.ff_embedding = nn.Embedding(num_layers, embed_dim)
+
+        self.ff_embedding.requires_grad = False
         self.t_embedding.requires_grad = False
 
         self.dropout = nn.Dropout(dropout)
