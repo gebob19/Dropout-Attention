@@ -82,6 +82,8 @@ class TaskSpecificAttention(SaveModel):
             # top = h
             # seq, bs, embed
             x, _ = mha(h, h, h)
+            # task attention
+            x = 10 * x * self.attention(x, te)
             h = x + h
             h = lnorm_1(h)
             # print(h.shape)
@@ -91,22 +93,15 @@ class TaskSpecificAttention(SaveModel):
             
             # seq, bs, embed
             x = feed_forward(h)
-            # feed forward attention
-            w = self.attention(x, ffe)
-            x = 10 * w * x
             x = self.dropout(x)
+            # feed forward attention
+            x = 10 * x * self.attention(x, ffe)
             h = x + h
             h = lnorm_2(h)
             # print(h.shape)
             # print("After FF")
             # very close to zero now (0.12 mean, 0.13 var)
             # print(torch.mean(x), torch.var(x))
-        
-            # task attention
-            w = self.attention(h, te)
-            x = 10 * w * h
-            h = x + h
-            h = lnorm_3(h)
 
             # h = h + top
             # print("After Attention")
