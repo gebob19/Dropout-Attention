@@ -136,7 +136,6 @@ class TaskAttention(SaveModel):
         # task attention
         x = x.transpose(0, 1)
         w = torch.bmm(x, te)
-        print(w.shape)
         w = torch.softmax(w.squeeze(-1), -1).unsqueeze(-1)
         w = w.transpose(0, 1)
         return w
