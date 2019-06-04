@@ -65,8 +65,10 @@ def batch_iter(lang, data, batch_size, max_sentence_len, shuffle=False):
 
     n = 10
     tmpdf = data.copy()
+    count = 0
     
     while len(tmpdf) > batch_size:
+        count += 1
         # grab first row
         (_, _, _, length) = tmpdf.values[0]
         lb, ub = length - n, length + n
@@ -76,7 +78,7 @@ def batch_iter(lang, data, batch_size, max_sentence_len, shuffle=False):
         fl_idxs = tmpdf.file_length.index
         idxs = [i for i, fl in zip(fl_idxs, file_lengths) if (fl >= lb and fl <= ub)]
 
-        if len(idxs) < batch_size / 2: break
+        if len(idxs) < batch_size / 2 and count > 10: break
         
         # shuffle & get batch
         random.shuffle(idxs)
