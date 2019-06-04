@@ -112,6 +112,7 @@ class TaskSpecificAttention(SaveModel):
             # seq, bs, embed
             x = feed_forward(h)
             x = self.dropout(x)
+
             # x = self.weight2 * x * self.attention(x, ffe)
             # x = self.weight2 * x * self.attention(w_embed, ffe)
             # x = self.weight2 * self.attention(x, ffe)
@@ -135,6 +136,7 @@ class TaskAttention(SaveModel):
         # task attention
         x = x.transpose(0, 1)
         w = torch.bmm(x, te)
+        print(w.shape)
         w = torch.softmax(w.squeeze(-1), -1).unsqueeze(-1)
         w = w.transpose(0, 1)
         return w
