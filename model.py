@@ -78,7 +78,7 @@ class TaskSpecificAttention(SaveModel):
 
             te = self.t_embedding(tasks).unsqueeze(-1)
             ffe = self.ff_embedding(ff_tasks).unsqueeze(-1)
-            
+             
             # top = h
             # seq, bs, embed
             x, _ = mha(h, h, h)
