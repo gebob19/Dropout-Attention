@@ -156,7 +156,6 @@ class TaskAttention(SaveModel):
         w.data.masked_fill_(attn_bytes, -inf)
         # re-scale with softmax
         w = F.softmax(w, -1)
-        print(w)
 
         w = w.transpose(0, 1).unsqueeze(-1)
         return w
