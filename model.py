@@ -56,7 +56,7 @@ class TaskSpecificAttention(SaveModel):
         self.ff = nn.ModuleList()
         self.ln_1, self.ln_2, self.ln_3 = nn.ModuleList(), nn.ModuleList(), nn.ModuleList()
         self.tasks = [] 
-        self.attention = TaskAttention()
+        self.attention = TaskAttention(device)
         # self.maxpool = nn.MaxPool1d(8)
         # self.ln3 = nn.BatchNorm1d(hidden_dim, eps=1e-12)
         
@@ -127,15 +127,38 @@ class TaskSpecificAttention(SaveModel):
         return y
 
 class TaskAttention(SaveModel):
-    def __init__(self):
+    def __init__(self, device):
         super().__init__()
+        self.device = device
         
     def forward(self, x, te):
-        # task attention
+        ## task attention
         x = x.transpose(0, 1)
         w = torch.bmm(x, te)
-        w = torch.softmax(w.squeeze(-1), -1).unsqueeze(-1)
-        w = w.transpose(0, 1)
+        # w = torch.softmax(w.squeeze(-1), -1).unsqueeze(-1)
+        
+        ## restrict attention
+        # restict to half of the sentence (can tune later)
+        w = w.squeeze(-1)
+        n = w.size(-1) // 2
+        # inverse probability hack for multinomial sampling
+        mx, _ = torch.max(w, -1)
+        mx = mx.unsqueeze(-1)
+        p_inv = F.softmax(mx - w, -1)
+        attnmask = torch.multinomial(p_inv, n)
+        # create restricted attention mask
+        inf = torch.tensor(float("inf")).to(self.device)
+        byte_mask = torch.zeros_like(w)
+        for bm, mask in zip(torch.split(byte_mask, 1), attnmask):
+            bm.squeeze()[mask] = 1
+        attn_bytes = byte_mask.byte().to(self.device)
+        # apply restricted attention mask
+        w.data.masked_fill_(attn_bytes, -inf)
+        # re-scale with softmax
+        w = F.softmax(w, -1)
+        print(w)
+
+        w = w.transpose(0, 1).unsqueeze(-1)
         return w
 
 
