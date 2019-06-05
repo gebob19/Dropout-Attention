@@ -135,27 +135,27 @@ class TaskAttention(SaveModel):
         ## task attention
         x = x.transpose(0, 1)
         w = torch.bmm(x, te)
-        w = torch.softmax(w.squeeze(-1), -1).unsqueeze(-1)
+        # w = torch.softmax(w.squeeze(-1), -1).unsqueeze(-1)
         
-        ## restrict attention
+        # restrict attention
         # restict to half of the sentence (can tune later)
-        # w = w.squeeze(-1)
-        # n = w.size(-1) // 2
-        # # inverse probability hack for multinomial sampling
-        # mx, _ = torch.max(w, -1)
-        # mx = mx.unsqueeze(-1)
-        # p_inv = F.softmax(mx - w, -1)
-        # attnmask = torch.multinomial(p_inv, n)
-        # # create restricted attention mask
-        # inf = torch.tensor(float("inf")).to(self.device)
-        # byte_mask = torch.zeros_like(w)
-        # for bm, mask in zip(torch.split(byte_mask, 1), attnmask):
-        #     bm.squeeze()[mask] = 1
-        # attn_bytes = byte_mask.byte().to(self.device)
-        # # apply restricted attention mask
-        # w.data.masked_fill_(attn_bytes, -inf)
-        # # re-scale with softmax
-        # w = F.softmax(w, -1).unsqueeze(-1)
+        w = w.squeeze(-1)
+        n = w.size(-1) // 2
+        # inverse probability hack for multinomial sampling
+        mx, _ = torch.max(w, -1)
+        mx = mx.unsqueeze(-1)
+        p_inv = F.softmax(mx - w, -1)
+        attnmask = torch.multinomial(p_inv, n)
+        # create restricted attention mask
+        inf = torch.tensor(float("inf")).to(self.device)
+        byte_mask = torch.zeros_like(w)
+        for bm, mask in zip(torch.split(byte_mask, 1), attnmask):
+            bm.squeeze()[mask] = 1
+        attn_bytes = byte_mask.byte().to(self.device)
+        # apply restricted attention mask
+        w.data.masked_fill_(attn_bytes, -inf)
+        # re-scale with softmax
+        w = F.softmax(w, -1).unsqueeze(-1)
 
         w = w.transpose(0, 1)
         return w
