@@ -101,8 +101,8 @@ class TaskSpecificAttention(SaveModel):
              
             # seq, bs, embed
             x, _ = mha(h, h, h)
-            x = self.weight1 * x * self.attention(x, te)
-            # x = self.weight1 * x * self.attention(w_embed, te)
+            # x = self.weight1 * x * self.attention(x, te)
+            x = self.weight1 * x * self.attention(w_embed, te)
             # x = self.weight1 * self.attention(x, te)
             # x = self.attention(w_embed, te) + self.attention(x, te)
             h = x + h
@@ -112,8 +112,8 @@ class TaskSpecificAttention(SaveModel):
             x = feed_forward(h)
             x = self.dropout(x)
 
-            x = self.weight2 * x * self.attention(x, ffe)
-            # x = self.weight2 * x * self.attention(w_embed, ffe)
+            # x = self.weight2 * x * self.attention(x, ffe)
+            x = self.weight2 * x * self.attention(w_embed, ffe)
             # x = self.weight2 * self.attention(x, ffe)
             # x = self.attention(w_embed, ffe) + self.attention(x, ffe) * x
             h = x + h
