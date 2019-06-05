@@ -141,7 +141,8 @@ class TaskAttention(SaveModel):
         # restict to half of the sentence (can tune later)
         w = w.squeeze(-1)
         # n = w.size(-1) // 2
-        n = int(w.size(-1) * 0.1)
+        # n is the # words to ignore 
+        n = int(w.size(-1) * 0.9)
 
         # inverse probability hack for multinomial sampling
         mx, _ = torch.max(w, -1)
