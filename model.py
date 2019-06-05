@@ -113,8 +113,8 @@ class TaskSpecificAttention(SaveModel):
             h = lnorm_1(h)
             
             # seq, bs, embed
-            x = feed_forward(h)
-            x = self.dropout(x)
+            # x = feed_forward(h)
+            # x = self.dropout(x)
 
             # x = self.weight2 * x * self.attention(x, ffe)
             # x = self.weight2 * x * self.attention(w_embed, ffe)
@@ -123,9 +123,9 @@ class TaskSpecificAttention(SaveModel):
             # x = self.attention(w_embed, ffe) + self.attention(x, ffe) * x
             # x = x + self.weight2 * self.attention(w_embed, ffe) * w_embed
             # h = x + h * self.attention(h, ffe)
-            h = x + w_embed * self.attention(w_embed, ffe)
-            # h = x + h 
-            h = lnorm_2(h)
+            # h = x + w_embed * self.attention(w_embed, ffe)
+            # # h = x + h 
+            # h = lnorm_2(h)
 
         # bs, seq, embed_dim
         h = h.transpose(0, 1)
@@ -143,30 +143,30 @@ class TaskAttention(SaveModel):
         ## task attention
         x = x.transpose(0, 1)
         w = torch.bmm(x, te)
-        w = torch.softmax(w.squeeze(-1), -1).unsqueeze(-1)
+        # w = torch.softmax(w.squeeze(-1), -1).unsqueeze(-1)
         
-        # # restrict attention
-        # # restict to half of the sentence (can tune later)
-        # w = w.squeeze(-1)
-        # # n = w.size(-1) // 2
-        # # n is the # words to ignore 
-        # n = int(w.size(-1) * 0.5)
+        # restrict attention
+        # restict to half of the sentence (can tune later)
+        w = w.squeeze(-1)
+        # n = w.size(-1) // 2
+        # n is the # words to ignore 
+        n = int(w.size(-1) * 0.5)
 
-        # # inverse probability hack for multinomial sampling
-        # mx, _ = torch.max(w, -1)
-        # mx = mx.unsqueeze(-1)
-        # p_inv = F.softmax(mx - w, -1)
-        # attnmask = torch.multinomial(p_inv, n)
-        # # create restricted attention mask
-        # inf = torch.tensor(float("inf")).to(self.device)
-        # byte_mask = torch.zeros_like(w)
-        # for bm, mask in zip(torch.split(byte_mask, 1), attnmask):
-        #     bm.squeeze()[mask] = 1
-        # attn_bytes = byte_mask.byte().to(self.device)
-        # # apply restricted attention mask
-        # w.data.masked_fill_(attn_bytes, -inf)
-        # # re-scale with softmax
-        # w = F.softmax(w, -1).unsqueeze(-1)
+        # inverse probability hack for multinomial sampling
+        mx, _ = torch.max(w, -1)
+        mx = mx.unsqueeze(-1)
+        p_inv = F.softmax(mx - w, -1)
+        attnmask = torch.multinomial(p_inv, n)
+        # create restricted attention mask
+        inf = torch.tensor(float("inf")).to(self.device)
+        byte_mask = torch.zeros_like(w)
+        for bm, mask in zip(torch.split(byte_mask, 1), attnmask):
+            bm.squeeze()[mask] = 1
+        attn_bytes = byte_mask.byte().to(self.device)
+        # apply restricted attention mask
+        w.data.masked_fill_(attn_bytes, -inf)
+        # re-scale with softmax
+        w = F.softmax(w, -1).unsqueeze(-1)
 
         w = w.transpose(0, 1)
         return w
