@@ -93,7 +93,7 @@ class TaskSpecificAttention(SaveModel):
             # x = self.weight1 * self.attention(x, te)
             # x = self.attention(w_embed, te) + self.attention(x, te)
             # x = x + self.weight1 * self.attention(w_embed, te) * w_embed
-            # h = x + h * self.attention(h, te)
+            h = x + h * self.attention(h, te)
             x = x + w_embed * self.attention(w_embed, te)
             # h = x + h * self.attention(h, ffe)
             # h = x + h
