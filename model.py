@@ -157,7 +157,7 @@ class TaskAttention(SaveModel):
         # inf = torch.tensor(float("inf")).to(self.device)
         byte_mask = torch.ones_like(w)
         for bm, mask in zip(torch.split(byte_mask, 1), attnmask):
-            bm.squeeze()[mask] = 0
+            bm.squeeze()[mask] = 0 
         w = byte_mask.to(self.device).unsqueeze(-1)
         # apply restricted attention mask
         # w.data.masked_fill_(attn_bytes, -inf)
