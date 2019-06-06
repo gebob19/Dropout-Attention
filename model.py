@@ -154,15 +154,15 @@ class TaskAttention(SaveModel):
         p_inv = F.softmax(mx - w, -1)
         attnmask = torch.multinomial(p_inv, n)
         # create restricted attention mask
-        inf = torch.tensor(float("inf")).to(self.device)
-        byte_mask = torch.zeros_like(w)
+        # inf = torch.tensor(float("inf")).to(self.device)
+        byte_mask = torch.ones_like(w)
         for bm, mask in zip(torch.split(byte_mask, 1), attnmask):
-            bm.squeeze()[mask] = 1
-        attn_bytes = byte_mask.byte().to(self.device)
+            bm.squeeze()[mask] = 0
+        w = byte_mask.to(self.device).unsqueeze(-1)
         # apply restricted attention mask
-        w.data.masked_fill_(attn_bytes, -inf)
+        # w.data.masked_fill_(attn_bytes, -inf)
         # re-scale with softmax
-        w = F.softmax(w, -1).unsqueeze(-1)
+        # w = F.softmax(w, -1).unsqueeze(-1)
 
         w = w.transpose(0, 1)
         return w
