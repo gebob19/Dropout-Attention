@@ -36,18 +36,19 @@ class TaskSpecificAttention(SaveModel):
         self.language = language
         
         # self.w_embedding = nn.Embedding(self.language.n_words, embed_dim)
-        self.pos_embeddings = nn.Embedding(num_pos, embed_dim)
-        self.w_embedding = glove_embeddings(trainable=True)
+        # glove vectors
         embed_dim = 300
+        self.w_embedding = glove_embeddings(trainable=True)
+        self.pos_embeddings = nn.Embedding(num_pos, embed_dim)
 
         self.attention = TaskAttention(device)
         self.t_embedding = nn.Embedding(num_layers, embed_dim)
         self.t_embedding.requires_grad = False
-        # self.ff_embedding = nn.Embedding(num_layers, embed_dim)
-        # self.ff_embedding.requires_grad = False
+        self.ff_embedding = nn.Embedding(num_layers, embed_dim)
+        self.ff_embedding.requires_grad = False
 
         self.dropout = nn.Dropout(dropout)
-        self.weight1 = nn.Parameter(torch.tensor([[1.]], requires_grad=True))
+        # self.weight1 = nn.Parameter(torch.tensor([[1.]], requires_grad=True))
         # self.weight2 = nn.Parameter(torch.tensor([[1.]], requires_grad=True))
         
         self.mhas = nn.ModuleList()
@@ -57,14 +58,14 @@ class TaskSpecificAttention(SaveModel):
         
         for i in range(num_layers):
             self.mhas.append(nn.MultiheadAttention(embed_dim, num_heads, dropout=dropout))
-            # self.ff.append(nn.Sequential(nn.Linear(embed_dim, hidden_dim),
-            #                                         nn.ReLU(), 
-            #                                         nn.Linear(hidden_dim, hidden_dim),
-            #                                         nn.ReLU(),
-            #                                         nn.Linear(hidden_dim, embed_dim)))
+            self.ff.append(nn.Sequential(nn.Linear(embed_dim, hidden_dim),
+                                                    nn.ReLU(), 
+                                                    nn.Linear(hidden_dim, hidden_dim),
+                                                    nn.ReLU(),
+                                                    nn.Linear(hidden_dim, embed_dim)))
             self.ln_1.append(nn.LayerNorm(embed_dim, eps=1e-12))
             self.tasks.append(i)
-            # self.ln_2.append(nn.LayerNorm(embed_dim, eps=1e-12))
+            self.ln_2.append(nn.LayerNorm(embed_dim, eps=1e-12))
         
         self.classify = nn.Linear(embed_dim, n_classes)
         
@@ -78,8 +79,8 @@ class TaskSpecificAttention(SaveModel):
         h = h + self.pos_embeddings(positions).expand_as(h)
         h = self.dropout(h)
 
-        # for task, mha, feed_forward, lnorm_1, lnorm_2 in zip(self.tasks, self.mhas, self.ff, self.ln_1, self.ln_2):
-        for task, mha, lnorm_1 in zip(self.tasks, self.mhas, self.ln_1):
+        for task, mha, feed_forward, lnorm_1, lnorm_2 in zip(self.tasks, self.mhas, self.ff, self.ln_1, self.ln_2):
+        # for task, mha, lnorm_1 in zip(self.tasks, self.mhas, self.ln_1):
             tasks = torch.tensor([task] * batch_size, device=self.device)
 
             te = self.t_embedding(tasks).unsqueeze(-1)
