@@ -78,7 +78,7 @@ def batch_iter(lang, data, batch_size, max_sentence_len, shuffle=False):
         fl_idxs = tmpdf.file_length.index
         idxs = [i for i, fl in zip(fl_idxs, file_lengths) if (fl >= lb and fl <= ub)]
 
-        if len(idxs) < batch_size / 2 and count > 100: break
+        if len(idxs) < batch_size / 2 and count > 50: break
         
         # shuffle & get batch
         random.shuffle(idxs)
