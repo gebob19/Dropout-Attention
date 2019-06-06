@@ -41,15 +41,13 @@ class TaskSpecificAttention(SaveModel):
         self.w_embedding = glove_embeddings(trainable=True)
         self.pos_embeddings = nn.Embedding(num_pos, embed_dim)
 
-        self.attention = TaskAttention(device, dropout)
-        self.t_embedding = nn.Embedding(num_layers, embed_dim)
-        self.t_embedding.requires_grad = False
-        self.ff_embedding = nn.Embedding(num_layers, embed_dim)
-        self.ff_embedding.requires_grad = False
+        # self.attention = TaskAttention(device, dropout)
+        # self.t_embedding = nn.Embedding(num_layers, embed_dim)
+        # self.t_embedding.requires_grad = False
+        # self.ff_embedding = nn.Embedding(num_layers, embed_dim)
+        # self.ff_embedding.requires_grad = False
 
-        # self.dropout = nn.Dropout(dropout)
-        # self.weight1 = nn.Parameter(torch.tensor([[1.]], requires_grad=True))
-        # self.weight2 = nn.Parameter(torch.tensor([[1.]], requires_grad=True))
+        self.dropout = nn.Dropout(dropout)
         
         self.mhas = nn.ModuleList()
         self.ff = nn.ModuleList()
@@ -77,14 +75,13 @@ class TaskSpecificAttention(SaveModel):
         w_embed = self.w_embedding(x)
         h = w_embed + self.pos_embeddings(positions).expand_as(w_embed)
         h = h + self.pos_embeddings(positions).expand_as(h)
-        # h = self.dropout(h)
 
         for task, mha, feed_forward, lnorm_1, lnorm_2 in zip(self.tasks, self.mhas, self.ff, self.ln_1, self.ln_2):
         # for task, mha, lnorm_1 in zip(self.tasks, self.mhas, self.ln_1):
-            tasks = torch.tensor([task] * batch_size, device=self.device)
+            # tasks = torch.tensor([task] * batch_size, device=self.device)
 
-            te = self.t_embedding(tasks).unsqueeze(-1)
-            ffe = self.ff_embedding(tasks).unsqueeze(-1)
+            # te = self.t_embedding(tasks).unsqueeze(-1)
+            # ffe = self.ff_embedding(tasks).unsqueeze(-1)
              
             # seq, bs, embed
             x, _ = mha(h, h, h)
@@ -94,15 +91,15 @@ class TaskSpecificAttention(SaveModel):
             # x = self.weight1 * self.attention(x, te)
             # x = self.attention(w_embed, te) + self.attention(x, te)
             # x = x + self.weight1 * self.attention(w_embed, te) * w_embed
-            if self.training:
-                x = x * self.attention(x, te)
+            # if self.training:
+            #     x = x * self.attention(x, te)
             # h = x + w_embed * self.attention(w_embed, te)
             h = x + h
             h = lnorm_1(h)
             
             # seq, bs, embed
             x = feed_forward(h)
-            # x = self.dropout(x)
+            x = self.dropout(x)
 
             # x = self.weight2 * x * self.attention(x, ffe)
             # x = self.weight2 * x * self.attention(w_embed, ffe)
@@ -112,8 +109,8 @@ class TaskSpecificAttention(SaveModel):
             # x = x + self.weight2 * self.attention(w_embed, ffe) * w_embed
             # h = x + h * self.attention(h, ffe)
             # h = x + w_embed * self.attention(w_embed, ffe)
-            if self.training:
-                x = x * self.attention(x, ffe)
+            # if self.training:
+            #     x = x * self.attention(x, ffe)
             h = x + h 
             h = lnorm_2(h)
 
