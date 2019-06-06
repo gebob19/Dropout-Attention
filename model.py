@@ -93,11 +93,11 @@ class TaskSpecificAttention(SaveModel):
         h = self.dropout(h)
 
         for task, mha, linear_1, linear_2, feed_forward, lnorm_1, lnorm_2, lnorm_3 in zip(self.tasks, self.mhas, self.linear_1, self.linear_2, self.ff, self.ln_1, self.ln_2, self.ln_3):
-            tasks = torch.tensor([task] * batch_size, device=self.device)
-            ff_tasks = torch.tensor([task] * batch_size, device=self.device)
+            # tasks = torch.tensor([task] * batch_size, device=self.device)
+            # ff_tasks = torch.tensor([task] * batch_size, device=self.device)
 
-            te = self.t_embedding(tasks).unsqueeze(-1)
-            ffe = self.ff_embedding(ff_tasks).unsqueeze(-1)
+            # te = self.t_embedding(tasks).unsqueeze(-1)
+            # ffe = self.ff_embedding(ff_tasks).unsqueeze(-1)
              
             # seq, bs, embed
             x, _ = mha(h, h, h)
@@ -108,14 +108,14 @@ class TaskSpecificAttention(SaveModel):
             # x = self.attention(w_embed, te) + self.attention(x, te)
             # x = x + self.weight1 * self.attention(w_embed, te) * w_embed
             # h = x + h * self.attention(h, te)
-            x = x + w_embed * self.attention(w_embed, te)
-            h = x + h * self.attention(h, ffe)
-            # h = x + h
+            # x = x + w_embed * self.attention(w_embed, te)
+            # h = x + h * self.attention(h, ffe)
+            h = x + h
             h = lnorm_1(h)
             
             # seq, bs, embed
-            # x = feed_forward(h)
-            # x = self.dropout(x)
+            x = feed_forward(h)
+            x = self.dropout(x)
 
             # x = self.weight2 * x * self.attention(x, ffe)
             # x = self.weight2 * x * self.attention(w_embed, ffe)
@@ -125,8 +125,8 @@ class TaskSpecificAttention(SaveModel):
             # x = x + self.weight2 * self.attention(w_embed, ffe) * w_embed
             # h = x + h * self.attention(h, ffe)
             # h = x + w_embed * self.attention(w_embed, ffe)
-            # # h = x + h 
-            # h = lnorm_2(h)
+            h = x + h 
+            h = lnorm_2(h)
 
         # bs, seq, embed_dim
         h = h.transpose(0, 1)
