@@ -42,9 +42,9 @@ class TaskSpecificAttention(SaveModel):
 
         self.attention = TaskAttention(device)
         self.t_embedding = nn.Embedding(num_layers, embed_dim)
-        self.ff_embedding = nn.Embedding(num_layers, embed_dim)
-        self.ff_embedding.requires_grad = False
         self.t_embedding.requires_grad = False
+        # self.ff_embedding = nn.Embedding(num_layers, embed_dim)
+        # self.ff_embedding.requires_grad = False
 
         self.dropout = nn.Dropout(dropout)
         # self.weight1 = nn.Parameter(torch.tensor([[1.]], requires_grad=True))
@@ -83,7 +83,7 @@ class TaskSpecificAttention(SaveModel):
             tasks = torch.tensor([task] * batch_size, device=self.device)
 
             te = self.t_embedding(tasks).unsqueeze(-1)
-            ffe = self.ff_embedding(tasks).unsqueeze(-1)
+            # ffe = self.ff_embedding(tasks).unsqueeze(-1)
              
             # seq, bs, embed
             x, _ = mha(h, h, h)
@@ -93,7 +93,7 @@ class TaskSpecificAttention(SaveModel):
             # x = self.weight1 * self.attention(x, te)
             # x = self.attention(w_embed, te) + self.attention(x, te)
             # x = x + self.weight1 * self.attention(w_embed, te) * w_embed
-            h = x + h * self.attention(h, te)
+            # h = x + h * self.attention(h, te)
             x = x + w_embed * self.attention(w_embed, te)
             # h = x + h * self.attention(h, ffe)
             # h = x + h
