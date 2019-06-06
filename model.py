@@ -41,11 +41,11 @@ class TaskSpecificAttention(SaveModel):
         self.w_embedding = glove_embeddings(trainable=True)
         self.pos_embeddings = nn.Embedding(num_pos, embed_dim)
 
-        self.attention = TaskAttention(device, dropout)
-        self.t_embedding = nn.Embedding(num_layers, embed_dim)
-        self.t_embedding.requires_grad = False
-        self.ff_embedding = nn.Embedding(num_layers, embed_dim)
-        self.ff_embedding.requires_grad = False
+        # self.attention = TaskAttention(device, dropout)
+        # self.t_embedding = nn.Embedding(num_layers, embed_dim)
+        # self.t_embedding.requires_grad = False
+        # self.ff_embedding = nn.Embedding(num_layers, embed_dim)
+        # self.ff_embedding.requires_grad = False
 
         self.dropout = nn.Dropout(dropout)
         
@@ -55,8 +55,8 @@ class TaskSpecificAttention(SaveModel):
         self.tasks = [] 
         
         for i in range(num_layers):
-            # self.mhas.append(nn.MultiheadAttention(embed_dim, num_heads, dropout=dropout))
-            self.mhas.append(nn.MultiheadAttention(embed_dim, num_heads, dropout=0))
+            self.mhas.append(nn.MultiheadAttention(embed_dim, num_heads, dropout=dropout))
+            # self.mhas.append(nn.MultiheadAttention(embed_dim, num_heads, dropout=0))
             self.ff.append(nn.Sequential(nn.Linear(embed_dim, hidden_dim),
                                                     nn.ReLU(), 
                                                     nn.Linear(hidden_dim, hidden_dim),
@@ -92,15 +92,15 @@ class TaskSpecificAttention(SaveModel):
             # x = self.weight1 * self.attention(x, te)
             # x = self.attention(w_embed, te) + self.attention(x, te)
             # x = x + self.weight1 * self.attention(w_embed, te) * w_embed
-            if self.training:
-                x = x * self.attention(x, te)
+            # if self.training:
+            #     x = x * self.attention(x, te)
             # h = x + w_embed * self.attention(w_embed, te)
             h = x + h
             h = lnorm_1(h)
             
             # seq, bs, embed
             x = feed_forward(h)
-            # x = self.dropout(x)
+            x = self.dropout(x)
 
             # x = self.weight2 * x * self.attention(x, ffe)
             # x = self.weight2 * x * self.attention(w_embed, ffe)
@@ -110,8 +110,8 @@ class TaskSpecificAttention(SaveModel):
             # x = x + self.weight2 * self.attention(w_embed, ffe) * w_embed
             # h = x + h * self.attention(h, ffe)
             # h = x + w_embed * self.attention(w_embed, ffe)
-            if self.training:
-                x = x * self.attention(x, ffe)
+            # if self.training:
+            #     x = x * self.attention(x, ffe)
             h = x + h 
             h = lnorm_2(h)
 
