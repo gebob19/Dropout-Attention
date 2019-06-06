@@ -41,13 +41,13 @@ class TaskSpecificAttention(SaveModel):
         self.w_embedding = glove_embeddings(trainable=True)
         self.pos_embeddings = nn.Embedding(num_pos, embed_dim)
 
-        self.attention = TaskAttention(device)
+        self.attention = TaskAttention(device, dropout)
         self.t_embedding = nn.Embedding(num_layers, embed_dim)
         self.t_embedding.requires_grad = False
         self.ff_embedding = nn.Embedding(num_layers, embed_dim)
         self.ff_embedding.requires_grad = False
 
-        self.dropout = nn.Dropout(dropout)
+        # self.dropout = nn.Dropout(dropout)
         # self.weight1 = nn.Parameter(torch.tensor([[1.]], requires_grad=True))
         # self.weight2 = nn.Parameter(torch.tensor([[1.]], requires_grad=True))
         
@@ -57,7 +57,7 @@ class TaskSpecificAttention(SaveModel):
         self.tasks = [] 
         
         for i in range(num_layers):
-            self.mhas.append(nn.MultiheadAttention(embed_dim, num_heads, dropout=dropout))
+            self.mhas.append(nn.MultiheadAttention(embed_dim, num_heads, dropout=0))
             self.ff.append(nn.Sequential(nn.Linear(embed_dim, hidden_dim),
                                                     nn.ReLU(), 
                                                     nn.Linear(hidden_dim, hidden_dim),
@@ -77,7 +77,7 @@ class TaskSpecificAttention(SaveModel):
         w_embed = self.w_embedding(x)
         h = w_embed + self.pos_embeddings(positions).expand_as(w_embed)
         h = h + self.pos_embeddings(positions).expand_as(h)
-        h = self.dropout(h)
+        # h = self.dropout(h)
 
         for task, mha, feed_forward, lnorm_1, lnorm_2 in zip(self.tasks, self.mhas, self.ff, self.ln_1, self.ln_2):
         # for task, mha, lnorm_1 in zip(self.tasks, self.mhas, self.ln_1):
@@ -102,7 +102,7 @@ class TaskSpecificAttention(SaveModel):
             
             # seq, bs, embed
             x = feed_forward(h)
-            x = self.dropout(x)
+            # x = self.dropout(x)
 
             # x = self.weight2 * x * self.attention(x, ffe)
             # x = self.weight2 * x * self.attention(w_embed, ffe)
@@ -129,9 +129,10 @@ class TaskSpecificAttention(SaveModel):
         return y
 
 class TaskAttention(SaveModel):
-    def __init__(self, device):
+    def __init__(self, device, dropout):
         super().__init__()
         self.device = device
+        self.dropout = dropout
         
     def forward(self, x, te):
         ## task attention
@@ -144,7 +145,7 @@ class TaskAttention(SaveModel):
         w = w.squeeze(-1)
         # n = w.size(-1) // 2
         # n is the # words to ignore 
-        n = int(w.size(-1) * 0.5)
+        n = int(w.size(-1) * self.dropout)
 
         # inverse probability hack for multinomial sampling
         mx, _ = torch.max(w, -1)
