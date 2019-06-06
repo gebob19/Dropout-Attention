@@ -131,8 +131,12 @@ class TaskSpecificAttention(SaveModel):
         # bs, seq, embed_dim
         h = h.transpose(0, 1)
 
-        m, _ = torch.max(h, -2)
-        y = torch.sigmoid(self.classify(m)).squeeze()
+        # BERT classification head 
+        # bs, embed_dim
+        x = h[:, 0, :]
+
+        # m, _ = torch.max(h, -2)
+        y = torch.sigmoid(self.classify(x)).squeeze()
         return y
 
 class TaskAttention(SaveModel):
