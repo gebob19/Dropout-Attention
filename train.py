@@ -270,6 +270,10 @@ def train(args):
         model = model.to(device)
         optimizer = torch.optim.Adam(model.parameters(), lr=float(args['--lr']))
 
+    print("Model Stats:")
+    print("# of parameters: {}".format(sum([p.numel() for p in model.parameters()])))
+    print("# of trainable parameters: {}".format(sum([p.numel() for p in model.parameters() if p.requires_grad])))
+
     loss_fcn = nn.BCELoss()
 
     # metric tracking 
