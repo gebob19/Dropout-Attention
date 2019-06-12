@@ -4,10 +4,12 @@ import matplotlib.pyplot as plt
 
 from language_structure import normalizeString
 
-def to_input_tensor(lang, sents, device):
+def to_input_tensor(lang, sents, max_seq_len, device):
+    sents = [s.split(' ') for s in sents]
     sents_id = [indexesFromSentence(lang, s) for s in sents]
     lengths = [len(s) for s in sents_id]
-    sents_pad = pad_sents(sents_id, lang.word2id['<pad>'])
+    
+    sents_pad = clip_pad_to_max(sents_id, max_seq_len, lang.word2id['<pad>'])
     sents_var = torch.tensor(sents_pad, dtype=torch.long, device=device)
     return torch.t(sents_var), lengths
 
@@ -21,19 +23,33 @@ def prepare_df(lang, df, base):
 
 def open_and_clean(lang, path, base):
     file = open(str(base/path), encoding='utf-8').read()
-    clean_file = normalizeString(file, stopwords=False, contractions=False)
+    # contractions = True for BERT consistency 
+    clean_file = normalizeString(file, stopwords=False, contractions=True)
     return clean_file
 
-# pad sentences with pad token to equal length
+# pad sentences with pad token or clip to equal length 
+def clip_pad_to_max(sents, max_sentence_len, pad_token):
+    max_seq_len = min(max_sentence_len, max(map(len, sents)))
+    resized_sents = []
+    for s in sents:
+        length = len(s)
+        if length > max_seq_len:
+            s = s[:max_sentence_len]
+        else:
+            s = pad(s, max_sentence_len, pad_token)
+        resized_sents.append(s)
+    return resized_sents
+
 def pad_sents(sents, pad_token):
     sents_padded = []
     max_seq = max(map(len, sents))
-    def pad(s):
-        diff = max_seq - len(s)
-        s = s + [pad_token for _ in range(diff)]
-        return s
-    sents_padded = [pad(s) for s in sents]
+    sents_padded = [pad(s, max_seq, pad_token) for s in sents]
     return sents_padded
+
+def pad(s, max_seq, pad_token):
+    diff = max_seq - len(s)
+    s = s + [pad_token for _ in range(diff)]
+    return s
 
 def clip_sents(sents, max_sentence_len):
     min_seq = min(map(len, sents))
