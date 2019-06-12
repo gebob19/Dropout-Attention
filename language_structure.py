@@ -43,7 +43,7 @@ class Lang:
         else:
             self.word2count[word] += 1
             
-    def top_n_words_model(self, n):
+    def top_n_words_model(self, n, glove):
         top_lang = Lang()
         ordered_words = sorted(self.word2count.items(), key=operator.itemgetter(1), reverse=True)
         for w, f in ordered_words[:n]: 
@@ -51,9 +51,10 @@ class Lang:
             top_lang.word2count[w] = f 
             
             # retain id to word for consistent embeddings - Glove Embeddings
-            id = self.word2id[w]
-            top_lang.word2id[w] = id
-            top_lang.id2word[id] = w
+            if glove:
+                id = self.word2id[w]
+                top_lang.word2id[w] = id
+                top_lang.id2word[id] = w
 
         return top_lang
     
