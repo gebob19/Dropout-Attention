@@ -51,13 +51,16 @@ from pathlib import Path
 from docopt import docopt
  
 from model import *
+from bert import tokenization
 from utils import prepare_df, clip_sents
 from language_structure import load_model, Lang
 
 base = Path('../aclImdb')
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+vocab_file = './uncased_L-12_H-768_A-12/vocab.txt'
+tokenizer = tokenization.FullTokenizer(vocab_file=vocab_file, do_lower_case=True)
 
-def batch_iter(lang, data, batch_size, max_sentence_len, shuffle=False):
+def batch_iter(lang, data, batch_size, shuffle=False):
     batch_num = math.ceil(len(data) / batch_size)
 
     if shuffle:
@@ -91,27 +94,12 @@ def batch_iter(lang, data, batch_size, max_sentence_len, shuffle=False):
         # open, clean, index txt files 
         results = prepare_df(lang, batchdf, base)
         results = sorted(results, key=lambda e: len(e[0].split(' ')), reverse=True)
-        sents, targets = [e[0].split(' ') for e in results], [e[1] for e in results]
+        # sents, targets = [e[0].split(' ') for e in results], [e[1] for e in results]
+        sents, targets = [e[0] for e in results], [e[1] for e in results]
 
-        sents = clip_sents(sents, max_sentence_len)
+        # sents = clip_sents(sents, max_sentence_len)
         
         yield sents, torch.tensor(targets, dtype=torch.float32, device=device).squeeze()
-    
-    # for i in range(batch_num):
-    #     # consistent batch sizes
-    #     if min((i + 1) * batch_size, len(data)) == len(data): break
-
-    #     lb, ub = i * batch_size, min((i + 1) * batch_size, len(data))
-    #     batch_df = data[lb:ub]
-        
-    #     # open, clean, sort the batch_df
-    #     results = prepare_df(lang, batch_df, base)
-    #     results = sorted(results, key=lambda e: len(e[0].split(' ')), reverse=True)
-    #     sents, targets = [e[0].split(' ') for e in results], [e[1] for e in results]
-
-    #     sents = clip_sents(sents, max_sentence_len)
-        
-    #     yield sents, torch.tensor(targets, dtype=torch.float32, device=device)
 
 
 def accuracy(preds, targets, threshold=torch.tensor([0.5], device=device)):
@@ -186,11 +174,12 @@ def save(model_save_path, metrics, model, optimizer):
 def qtest(args):
     args['--batch-size'] = '2'
     args['--embed-size'] = '100'
-    args['--hidden-size'] = '50'
+    args['--hidden-size'] = '10'
     args['--n-heads'] = '1'
     args['--n-layers'] =  '1'
 
     args['--n-words'] = '10000'
+    args['--max-sent-len'] = '100'
     
     args['--log-every'] = '2'
     args['--validate-every'] = '1'
@@ -238,12 +227,21 @@ def train(args):
         print('model loaded...')
     else: 
         lang = load_model()
-        lang = lang.top_n_words_model(n_words)
+        lang = lang.top_n_words_model(n_words, glove=True)
 
         hidden_size = int(args['--hidden-size'])
         embed_size = int(args['--embed-size'])
 
-        model = TaskSpecificAttention(lang, device, embed_size, hidden_size, max_sentence_len, lang.n_words, n_heads, n_layers, float(args['--dropout']), 1)
+        model = TaskSpecificAttention(lang, 
+                                      device,
+                                      embed_size, 
+                                      hidden_size, 
+                                      max_sentence_len, 
+                                      lang.n_words, 
+                                      n_heads, 
+                                      n_layers, 
+                                      float(args['--dropout']), 
+                                      1)
 
         # model = TransformerClassifier(language=lang, device=device,
         #                               embed_dim=embed_size, 
@@ -305,7 +303,7 @@ def train(args):
             begin_time = time.time()
             
             # train
-            for sents, targets in batch_iter(lang, train_df, train_batch_size, max_sentence_len, shuffle=True):
+            for sents, targets in batch_iter(lang, train_df, train_batch_size, shuffle=True):
                 torch.cuda.empty_cache()
                 start_train_time = time.time()
                 train_iter += 1 

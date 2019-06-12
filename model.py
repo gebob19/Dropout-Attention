@@ -34,6 +34,7 @@ class TaskSpecificAttention(SaveModel):
         super().__init__()
         self.device = device
         self.language = language
+        self.max_seq_len = num_pos
         
         # self.w_embedding = nn.Embedding(self.language.n_words, embed_dim)
         # glove vectors
@@ -70,7 +71,7 @@ class TaskSpecificAttention(SaveModel):
         
     def forward(self, sents):
         batch_size = len(sents)
-        x, _ = to_input_tensor(self.language, sents, self.device)
+        x, _ = to_input_tensor(self.language, sents, self.max_seq_len, self.device)
 
         positions = torch.arange(len(x), device=x.device).unsqueeze(-1)
         w_embed = self.w_embedding(x)
