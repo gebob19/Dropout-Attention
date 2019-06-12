@@ -2,6 +2,7 @@ glove*
 *.zip
 *.pkl
 model_saves/*
+data/*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
