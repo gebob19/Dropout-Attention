@@ -63,7 +63,7 @@ class TransformerBlock(nn.Module):
         x = self.output_sublayer(x, self.feed_forward)
 
         if self.attention_dropout:
-            task_batch = torch.tensor([0] * x.size(1))
+            task_batch = torch.tensor([0] * x.size(1), device=self.device)
             task_embed = self.layer_embeddings(task_batch).unsqueeze(-1)
             x = x * self.task_attention(x, task_embed)
         else:
