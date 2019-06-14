@@ -7,7 +7,7 @@ from language_structure import normalizeString
 
 def bert_input_tensor(tokenizer, sentences, max_seq_len, device):
     bert_tokens = [tokenizer.tokenize(s) for s in sentences]
-    token_ids = [tokenizer.convert_tokens_to_ids(ts) for ts in bert_tokens]
+    token_ids = [lang.get_id('<s>')] + [tokenizer.convert_tokens_to_ids(ts) for ts in bert_tokens]
     token_ids = clip_pad_to_max(token_ids, max_seq_len, 0)
     token_lengths = list(map(len, token_ids))
     token_tensor = torch.tensor(token_ids, dtype=torch.long, device=device)
