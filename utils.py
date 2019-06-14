@@ -4,24 +4,34 @@ import matplotlib.pyplot as plt
 
 from language_structure import normalizeString
 
+
+def bert_input_tensor(tokenizer, sentences, max_seq_len, device):
+    bert_tokens = [tokenizer.tokenize(s) for s in sentences]
+    token_ids = [tokenizer.convert_tokens_to_ids(ts) for ts in bert_tokens]
+    token_ids = clip_pad_to_max(token_ids, max_seq_len, 0)
+    token_lengths = list(map(len, token_ids))
+    token_tensor = torch.tensor(token_ids, dtype=torch.long, device=device)
+
+    return torch.t(token_tensor), token_lengths
+
 def to_input_tensor(lang, sents, max_seq_len, device):
     sents = [s.split(' ') for s in sents]
     sents_id = [indexesFromSentence(lang, s) for s in sents]
     lengths = [len(s) for s in sents_id]
     
     sents_pad = clip_pad_to_max(sents_id, max_seq_len, lang.word2id['<pad>'])
-    sents_var = torch.tensor(sents_pad, dtype=torch.long, device=device)
+    sents_var = torch.tensor(sents_pad, dtype=torch.float, device=device)
     return torch.t(sents_var), lengths
 
 def indexesFromSentence(lang, sentence):
     return [lang.get_id('<s>')] + [lang.get_id(word) for word in sentence]
 
 # open + clean all examles in a dataframe
-def prepare_df(lang, df, base):
-    results = [(open_and_clean(lang, p, base), t) for (p, t) in zip(df['path'].values, df['target'].values)] 
+def prepare_df(df, base):
+    results = [(open_and_clean(p, base), t) for (p, t) in zip(df['path'].values, df['target'].values)] 
     return results
 
-def open_and_clean(lang, path, base):
+def open_and_clean(path, base):
     file = open(str(base/path), encoding='utf-8').read()
     # contractions = True for BERT consistency 
     clean_file = normalizeString(file, stopwords=False, contractions=True)
