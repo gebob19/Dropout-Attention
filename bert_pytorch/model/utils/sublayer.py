@@ -38,7 +38,7 @@ class TaskAttention(nn.Module):
         self.dropout = dropout
         
     def forward(self, q, k):
-        # q = q.transpose(0, 1) 
+        q = q.transpose(0, 1) 
         
         # restricted attention dropout
         w = torch.bmm(q, k).squeeze(-1)
@@ -59,5 +59,5 @@ class TaskAttention(nn.Module):
             bm.squeeze()[mask] = 0. 
         w = byte_mask.to(self.device).unsqueeze(-1)
 
-        # w = w.transpose(0, 1)
+        w = w.transpose(0, 1)
         return w

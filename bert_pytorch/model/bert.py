@@ -41,7 +41,8 @@ class BERTClassificationWrapper(SaveModel):
         x = self.bert(x, segment_info=None)
         
         # embedding of [CLS] 
-        x = self.linear(x[:, 0, :])
+        x = self.linear(x[0, :, :])
+        # x = self.linear(x[:, 0, :])
         if self.number_classes == 1:
             y = torch.sigmoid(x)
         else:

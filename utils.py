@@ -12,8 +12,8 @@ def bert_input_tensor(tokenizer, sentences, max_seq_len, device):
     token_lengths = list(map(len, token_ids))
     token_tensor = torch.tensor(token_ids, dtype=torch.long, device=device)
 
-    return token_tensor, token_lengths
-    # return torch.t(token_tensor), token_lengths
+    # return token_tensor, token_lengths
+    return torch.t(token_tensor), token_lengths
 
 def to_input_tensor(lang, sents, max_seq_len, device):
     sents = [s.split(' ') for s in sents]
