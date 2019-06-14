@@ -11,6 +11,7 @@ Options:
     --qtest                                 quick test mode
     --load                                  load model flag
     --save                                  save model flag 
+    --attention-dropout                     use attention dropout flag
     --seed=<int>                            seed [default: 0]
     --batch-size=<int>                      batch size [default: 128]
     --embed-size=<int>                      embedding size [default: 256]
@@ -51,16 +52,15 @@ from pathlib import Path
 from docopt import docopt
  
 from model import *
+from bert_pytorch.model.bert import BERTClassificationWrapper
 from bert import tokenization
 from utils import prepare_df, clip_sents
 from language_structure import load_model, Lang
 
 base = Path('../aclImdb')
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-vocab_file = './uncased_L-12_H-768_A-12/vocab.txt'
-tokenizer = tokenization.FullTokenizer(vocab_file=vocab_file, do_lower_case=True)
 
-def batch_iter(lang, data, batch_size, shuffle=False):
+def batch_iter(data, batch_size, shuffle=False):
     batch_num = math.ceil(len(data) / batch_size)
 
     if shuffle:
@@ -92,7 +92,7 @@ def batch_iter(lang, data, batch_size, shuffle=False):
         tmpdf = tmpdf[~tmpdf.index.isin(batchdf.index)]
         
         # open, clean, index txt files 
-        results = prepare_df(lang, batchdf, base)
+        results = prepare_df(batchdf, base)
         results = sorted(results, key=lambda e: len(e[0].split(' ')), reverse=True)
         # sents, targets = [e[0].split(' ') for e in results], [e[1] for e in results]
         sents, targets = [e[0] for e in results], [e[1] for e in results]
@@ -228,21 +228,32 @@ def train(args):
     else: 
         lang = load_model()
         lang = lang.top_n_words_model(n_words, glove=True)
+        vocab_file = './uncased_L-12_H-768_A-12/vocab.txt'
+        tokenizer = tokenization.FullTokenizer(vocab_file=vocab_file, do_lower_case=True)
 
         hidden_size = int(args['--hidden-size'])
         embed_size = int(args['--embed-size'])
 
-        model = TaskSpecificAttention(lang, 
-                                      device,
-                                      embed_size, 
-                                      hidden_size, 
-                                      max_sentence_len, 
-                                      lang.n_words, 
-                                      n_heads, 
-                                      n_layers, 
-                                      float(args['--dropout']), 
-                                      1)
+        model = BERTClassificationWrapper(device,
+                                tokenizer,
+                                number_classes=1,
+                                max_seq_len=max_sentence_len,
+                                hidden=hidden_size,
+                                n_layers=n_layers,
+                                attn_heads=n_heads,
+                                dropout=float(args['--dropout']),
+                                attention_dropout=args['--attention-dropout'])
 
+        # model = TaskSpecificAttention(lang, 
+        #                               device,
+        #                               embed_size, 
+        #                               hidden_size, 
+        #                               max_sentence_len, 
+        #                               lang.n_words, 
+        #                               n_heads, 
+        #                               n_layers, 
+        #                               float(args['--dropout']), 
+        #                               1)
         # model = TransformerClassifier(language=lang, device=device,
         #                               embed_dim=embed_size, 
         #                               hidden_dim=hidden_size,
@@ -303,7 +314,7 @@ def train(args):
             begin_time = time.time()
             
             # train
-            for sents, targets in batch_iter(lang, train_df, train_batch_size, shuffle=True):
+            for sents, targets in batch_iter(train_df, train_batch_size, shuffle=True):
                 torch.cuda.empty_cache()
                 start_train_time = time.time()
                 train_iter += 1 
@@ -331,7 +342,7 @@ def train(args):
                     n_examples = n_correct = b_val_loss = 0
 
                     with torch.no_grad():
-                        for i, (val_sents, val_targets) in enumerate(batch_iter(lang, test_df, train_batch_size, max_sentence_len)):
+                        for i, (val_sents, val_targets) in enumerate(batch_iter(test_df, train_batch_size)):
                             val_preds = model(val_sents)
                             batch_n_correct = accuracy(val_preds, val_targets)
                             vloss = loss_fcn(val_preds, val_targets)
