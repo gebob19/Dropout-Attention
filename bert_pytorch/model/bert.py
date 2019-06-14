@@ -41,7 +41,7 @@ class BERTClassificationWrapper(SaveModel):
         x = self.bert(x, segment_info=None)
         
         # embedding of [CLS] 
-        x = self.linear(x[0, :, :])
+        x = self.linear(x[:, 0, :])
         if self.number_classes == 1:
             y = torch.sigmoid(x)
         else:
@@ -81,8 +81,7 @@ class BERT(nn.Module):
     def forward(self, x, segment_info):
         # attention masking for padded token
         # torch.ByteTensor([batch_size, 1, seq_len, seq_len)
-        mask = (x > 0).unsqueeze(1).repeat(1, x.size(1), 1).unsqueeze(1)
-
+        mask = (x > 0).unsqueeze(1).repeat(1, x.size(1), 1)
         # embedding the indexed sequence to sequence of vectors
         x = self.embedding(x, segment_info)
 
