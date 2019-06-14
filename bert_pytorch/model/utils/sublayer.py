@@ -24,7 +24,7 @@ class SublayerConnection(nn.Module):
         h = sublayer(x)
         # apply dropout of choice
         if self.attention_dropout:
-            bs = x.size(0)
+            bs = x.size(1)
             batch_task = self.layer_embedding.repeat(bs).view(bs, -1).unsqueeze(-1)
             h = h * self.task_attention(h, batch_task)
         else:
