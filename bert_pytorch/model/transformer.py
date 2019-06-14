@@ -20,20 +20,22 @@ class TransformerBlock(nn.Module):
         :param dropout: dropout rate
         """
         super().__init__()
-        self.dropout = dropout
         self.attention_dropout = attention_dropout
         self.device = device
 
         if attention_dropout:
             self.layer_embeddings = nn.Embedding(1, hidden)
             self.task_attention = TaskAttention(device, dropout)
+            
+            # DONT INCLUDE DROPOUT ELSEWHERE
+            dropout = 0.
 
         # self.attention = MultiHeadedAttention(h=attn_heads, d_model=hidden)
         self.attention = nn.MultiheadAttention(hidden, attn_heads, dropout=dropout)
         self.feed_forward = PositionwiseFeedForward(d_model=hidden, d_ff=feed_forward_hidden, dropout=dropout)
         self.input_sublayer = SublayerConnection(size=hidden, dropout=dropout)
         self.output_sublayer = SublayerConnection(size=hidden, dropout=dropout)
-        self.dropout_layer = nn.Dropout(p=dropout)
+        self.dropout = nn.Dropout(p=dropout)
 
     def forward(self, x, mask):
         x = self.input_sublayer(x, lambda _x: self.attention(_x, _x, _x, need_weights=False)[0])
@@ -43,11 +45,9 @@ class TransformerBlock(nn.Module):
             task_batch = torch.tensor([0] * x.size(1), device=self.device)
             task_embed = self.layer_embeddings(task_batch).unsqueeze(-1)
             x = x * self.task_attention(x, task_embed)
-        else:
-            x = self.dropout_layer(x) 
 
+        x = self.dropout(x) 
         return x
-
 
 class TaskAttention(nn.Module):
     def __init__(self, device, dropout):
