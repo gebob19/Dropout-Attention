@@ -26,6 +26,7 @@ class TransformerBlock(nn.Module):
 
         if attention_dropout:
             self.layer_embeddings = nn.Embedding(1, hidden)
+            self.task_attention = TaskAttention(device, dropout)
 
         self.attention = MultiHeadedAttention(h=attn_heads, d_model=hidden)
         self.feed_forward = PositionwiseFeedForward(d_model=hidden, d_ff=feed_forward_hidden, dropout=dropout)
@@ -33,7 +34,27 @@ class TransformerBlock(nn.Module):
         self.output_sublayer = SublayerConnection(size=hidden, dropout=dropout)
         self.dropout_layer = nn.Dropout(p=dropout)
 
-    def task_attention(self, q, k):
+    def forward(self, x, mask):
+        x = self.input_sublayer(x, lambda _x: self.attention(_x, _x, _x, mask))
+        x = self.output_sublayer(x, self.feed_forward)
+
+        if self.attention_dropout:
+            task_batch = torch.tensor([0] * x.size(1), device=self.device)
+            task_embed = self.layer_embeddings(task_batch).unsqueeze(-1)
+            x = x * self.task_attention(x, task_embed)
+        else:
+            x = self.dropout_layer(x) 
+
+        return x
+
+
+class TaskAttention(nn.Module):
+    def __init__(self, device, dropout):
+        super().__init__()
+        self.device = device
+        self.dropout = dropout
+        
+    def forward(self, q, k):
         q = q.transpose(0, 1)
         
         # restricted attention dropout
@@ -52,21 +73,8 @@ class TransformerBlock(nn.Module):
         # create restricted attention mask
         byte_mask = torch.ones_like(w)
         for bm, mask in zip(torch.split(byte_mask, 1), attnmask):
-            bm.squeeze()[mask] = 0 
+            bm.squeeze()[mask] = 0. 
         w = byte_mask.to(self.device).unsqueeze(-1)
 
         w = w.transpose(0, 1)
         return w
-
-    def forward(self, x, mask):
-        x = self.input_sublayer(x, lambda _x: self.attention(_x, _x, _x, mask))
-        x = self.output_sublayer(x, self.feed_forward)
-
-        if self.attention_dropout:
-            task_batch = torch.tensor([0] * x.size(1), device=self.device)
-            task_embed = self.layer_embeddings(task_batch).unsqueeze(-1)
-            x = x * self.task_attention(x, task_embed)
-        else:
-            x = self.dropout_layer(x) 
-
-        return x
