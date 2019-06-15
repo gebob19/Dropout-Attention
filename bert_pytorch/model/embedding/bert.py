@@ -31,8 +31,9 @@ class BERTEmbedding(nn.Module):
         self.embed_size = embed_size
 
     def forward(self, sequence, segment_label):
-        x = self.token(sequence) + self.position(sequence) #+ self.segment(segment_label)
-        return self.dropout(x)
+        x = self.token(sequence)# + self.position(sequence) #+ self.segment(segment_label)
+        return x
+        # return self.dropout(x)
 
 
 def glove_embeddings(trainable):

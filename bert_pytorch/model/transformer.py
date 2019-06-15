@@ -26,15 +26,10 @@ class TransformerBlock(nn.Module):
         self.input_sublayer = SublayerConnection(device, size=hidden, dropout=dropout, attention_dropout=attention_dropout)
         self.output_sublayer = SublayerConnection(device, size=hidden, dropout=dropout, attention_dropout=attention_dropout)
 
-        # self.ln1 = nn.LayerNorm(hidden, eps=1e-12)
-        # self.ln2 = nn.LayerNorm(hidden, eps=1e-12)
-
         # DONT APPLY DROPOUT ELSE WHERE
         if attention_dropout:
             dropout = 0.
 
-        # self.attention = MultiHeadedAttention(h=attn_heads, d_model=hidden)
-        # self.feed_forward = PositionwiseFeedForward(d_model=hidden, d_ff=feed_forward_hidden, dropout=dropout)
         self.attention = nn.MultiheadAttention(hidden, attn_heads, dropout=0.)
         self.feed_forward = nn.Sequential(nn.Linear(hidden, feed_forward_hidden),
                                         nn.ReLU(), 
@@ -42,14 +37,6 @@ class TransformerBlock(nn.Module):
         self.dropout = nn.Dropout(p=dropout)
 
     def forward(self, x, mask):
-        # x, _ = self.attention(h, h, h)
-        # x = self.dropout(x)
-        # h = self.ln1(x + h)
-
-        # x = self.feed_forward(h)
-        # x = self.dropout(x)
-        # h = self.ln2(x + h)
-
         x = self.input_sublayer(x, lambda _x: self.attention(_x, _x, _x, need_weights=False)[0])
         x = self.output_sublayer(x, self.feed_forward)
         x = self.dropout(x) 
