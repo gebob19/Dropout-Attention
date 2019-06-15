@@ -24,15 +24,11 @@ class BERTClassificationWrapper(SaveModel):
     def __init__(self, device, tokenizer, number_classes, max_seq_len, hidden, n_layers, attn_heads, dropout, attention_dropout):
         super().__init__()
         self.tokenizer = tokenizer
-        # self.language = language
         self.max_seq_len = max_seq_len
         self.number_classes = number_classes
         self.device = device
-        # fixed glove embeddings
-        # self.embed_dim = 300
-        self.embed_dim = hidden
+        
         self.bert = BERT(len(tokenizer.vocab),
-            # language.n_words, 
                          device, 
                          max_seq_len,
                          hidden, 
@@ -40,19 +36,18 @@ class BERTClassificationWrapper(SaveModel):
                          attn_heads, 
                          dropout, 
                          attention_dropout)
-        self.linear = nn.Linear(self.embed_dim, number_classes)
+        self.linear = nn.Linear(hidden, number_classes)
         
     def forward(self, sentences):
         # tokenize + id sentences using bert tokenizer
         x, _ = bert_input_tensor(self.tokenizer, sentences, self.max_seq_len, self.device)
-        # x, _ = to_input_tensor(self.language, sentences, self.max_seq_len, self.device)
 
         # model pass through
         x = self.bert(x, segment_info=None)
         
         # embedding of [CLS]
         x = self.linear(x[0, :, :])
-        # x = self.linear(x[:, 0, :])
+    
         if self.number_classes == 1:
             y = torch.sigmoid(x)
         else:
@@ -80,14 +75,12 @@ class BERT(nn.Module):
 
         # embedding for BERT, sum of positional, segment, token embeddings
         embed_dropout = 0. if attention_dropout else dropout
-        # pre-trained glove token embeddings
-        embed_dim = hidden
         self.embedding = BERTEmbedding(vocab_size=vocab_size, embed_size=hidden, dropout=embed_dropout)
 
         # multi-layers transformer blocks, deep network
         # paper noted they used 4*hidden_size for ff_network_hidden_size
         self.transformer_blocks = nn.ModuleList(
-            [TransformerBlock(embed_dim, attn_heads, 4 * hidden, dropout, attention_dropout, device) for _ in range(n_layers)])
+            [TransformerBlock(hidden, attn_heads, 4 * hidden, dropout, attention_dropout, device) for _ in range(n_layers)])
 
     def forward(self, x, segment_info):
         # mask = (x > 0).unsqueeze(1).repeat(1, x.size(1), 1)
