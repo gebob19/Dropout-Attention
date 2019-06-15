@@ -234,26 +234,26 @@ def train(args):
         hidden_size = int(args['--hidden-size'])
         embed_size = int(args['--embed-size'])
 
-        # model = BERTClassificationWrapper(device,
-        #                         lang,
-        #                         number_classes=1,
-        #                         max_seq_len=max_sentence_len,
-        #                         hidden=hidden_size,
-        #                         n_layers=n_layers,
-        #                         attn_heads=n_heads,
-        #                         dropout=float(args['--dropout']),
-        #                         attention_dropout=args['--attention-dropout'])
+        model = BERTClassificationWrapper(device,
+                                lang,
+                                number_classes=1,
+                                max_seq_len=max_sentence_len,
+                                hidden=hidden_size,
+                                n_layers=n_layers,
+                                attn_heads=n_heads,
+                                dropout=float(args['--dropout']),
+                                attention_dropout=args['--attention-dropout'])
 
-        model = TaskSpecificAttention(lang, 
-                                      device,
-                                      embed_size, 
-                                      hidden_size, 
-                                      max_sentence_len, 
-                                      lang.n_words, 
-                                      n_heads, 
-                                      n_layers, 
-                                      float(args['--dropout']), 
-                                      1)
+        # model = TaskSpecificAttention(lang, 
+        #                               device,
+        #                               embed_size, 
+        #                               hidden_size, 
+        #                               max_sentence_len, 
+        #                               lang.n_words, 
+        #                               n_heads, 
+        #                               n_layers, 
+        #                               float(args['--dropout']), 
+        #                               1)
         # model = TransformerClassifier(language=lang, device=device,
         #                               embed_dim=embed_size, 
         #                               hidden_dim=hidden_size,
