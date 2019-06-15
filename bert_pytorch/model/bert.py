@@ -4,7 +4,7 @@ import torch.nn as nn
 from .transformer import TransformerBlock
 from .embedding import BERTEmbedding
 
-from utils import bert_input_tensor
+from utils import bert_input_tensor, to_input_tensor
 
 class SaveModel(nn.Module):
     def __init__(self):
@@ -18,13 +18,14 @@ class SaveModel(nn.Module):
         torch.save(params, path)
 
 class BERTClassificationWrapper(SaveModel):
-    def __init__(self, device, tokenizer, number_classes, max_seq_len, hidden, n_layers, attn_heads, dropout, attention_dropout):
+    def __init__(self, device, language, number_classes, max_seq_len, hidden, n_layers, attn_heads, dropout, attention_dropout):
         super().__init__()
-        self.tokenizer = tokenizer
+        # self.tokenizer = tokenizer
+        self.language = language
         self.max_seq_len = max_seq_len
         self.number_classes = number_classes
         self.device = device
-        self.bert = BERT(len(tokenizer.vocab), 
+        self.bert = BERT(language.n_words, 
                          device, 
                          hidden, 
                          n_layers, 
@@ -35,12 +36,13 @@ class BERTClassificationWrapper(SaveModel):
         
     def forward(self, sentences):
         # tokenize + id sentences using bert tokenizer
-        x, _ = bert_input_tensor(self.tokenizer, sentences, self.max_seq_len, self.device)
-        
+        # x, _ = bert_input_tensor(self.tokenizer, sentences, self.max_seq_len, self.device)
+        x, _ = to_input_tensor(self.language, sentences, self.max_seq_len, self.device)
+
         # model pass through
         x = self.bert(x, segment_info=None)
         
-        # embedding of [CLS] 
+        # embedding of [CLS]
         x = self.linear(x[0, :, :])
         # x = self.linear(x[:, 0, :])
         if self.number_classes == 1:

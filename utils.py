@@ -21,7 +21,7 @@ def to_input_tensor(lang, sents, max_seq_len, device):
     lengths = [len(s) for s in sents_id]
     
     sents_pad = clip_pad_to_max(sents_id, max_seq_len, lang.word2id['<pad>'])
-    sents_var = torch.tensor(sents_pad, dtype=torch.float, device=device)
+    sents_var = torch.tensor(sents_pad, dtype=torch.long, device=device)
     return torch.t(sents_var), lengths
 
 def indexesFromSentence(lang, sentence):
