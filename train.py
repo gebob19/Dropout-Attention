@@ -443,6 +443,7 @@ def main():
     elif args['--test']:
         assert args['--load'], 'Must load a model for testing...'
         model, _, _, _ = load(args['--load-from'])
+        model = model.to(device)
         test_model(model, int(args['--batch-size']))
     else: 
         train(args)
