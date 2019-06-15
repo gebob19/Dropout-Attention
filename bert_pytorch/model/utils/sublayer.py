@@ -23,7 +23,7 @@ class SublayerConnection(nn.Module):
         "Apply residual connection to any sublayer with the same size."
         h = sublayer(x)
         # apply dropout of choice
-        if self.attention_dropout:
+        if self.attention_dropout and self.training:
             bs = x.size(1)
             batch_task = self.layer_embedding.repeat(bs).view(bs, -1).unsqueeze(-1)
             h = h * self.task_attention(h, batch_task)
