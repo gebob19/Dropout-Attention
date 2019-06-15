@@ -227,7 +227,7 @@ def train(args):
         print('model loaded...')
     else: 
         lang = load_model()
-        lang = lang.top_n_words_model(n_words, glove=True)
+        lang = lang.top_n_words_model(n_words, glove=False)
         # vocab_file = './uncased_L-12_H-768_A-12/vocab.txt'
         # tokenizer = tokenization.FullTokenizer(vocab_file=vocab_file, do_lower_case=True)
 

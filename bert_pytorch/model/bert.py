@@ -31,7 +31,7 @@ class BERTClassificationWrapper(SaveModel):
         self.number_classes = number_classes
         self.device = device
         # fixed glove embeddings
-        self.embed_dim = 300
+        self.embed_dim = hidden
         self.bert = BERT(language.n_words, 
                          device, 
                          max_seq_len,
