@@ -1,4 +1,6 @@
+import torch
 import torch.nn as nn
+import numpy as np 
 from .token import TokenEmbedding
 from .position import PositionalEmbedding
 from .segment import SegmentEmbedding
@@ -21,7 +23,8 @@ class BERTEmbedding(nn.Module):
         :param dropout: dropout rate
         """
         super().__init__()
-        self.token = TokenEmbedding(vocab_size=vocab_size, embed_size=embed_size)
+        # self.token = TokenEmbedding(vocab_size=vocab_size, embed_size=embed_size)
+        self.token = glove_embeddings(trainable=True)
         self.position = PositionalEmbedding(d_model=self.token.embedding_dim)
         self.segment = SegmentEmbedding(embed_size=self.token.embedding_dim)
         self.dropout = nn.Dropout(p=dropout)
@@ -30,3 +33,16 @@ class BERTEmbedding(nn.Module):
     def forward(self, sequence, segment_label):
         x = self.token(sequence) + self.position(sequence) #+ self.segment(segment_label)
         return self.dropout(x)
+
+
+def glove_embeddings(trainable):
+    with open('./glove/imdb_weights.pkl', 'rb') as f:
+        weights_matrix = np.load(f, allow_pickle=True)
+    mtrx = torch.tensor(weights_matrix)
+    
+    embedding = nn.Embedding(mtrx.size(0), 300)
+    embedding.load_state_dict({'weight': mtrx})
+    
+    if not trainable:
+        embedding.requires_grad = False
+    return embedding

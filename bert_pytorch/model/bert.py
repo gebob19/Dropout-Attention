@@ -31,7 +31,7 @@ class BERTClassificationWrapper(SaveModel):
         self.number_classes = number_classes
         self.device = device
         # fixed glove embeddings
-        self.embed_dim = hidden
+        self.embed_dim = 300
         self.bert = BERT(language.n_words, 
                          device, 
                          max_seq_len,
@@ -81,14 +81,13 @@ class BERT(nn.Module):
         # embedding for BERT, sum of positional, segment, token embeddings
         embed_dropout = 0. if attention_dropout else dropout
         self.embedding = BERTEmbedding(vocab_size=vocab_size, embed_size=hidden, dropout=embed_dropout)
-        # embed_dim = 300
-        # self.w_embedding = glove_embeddings(trainable=True)
-        # self.pos_embeddings = nn.Embedding(max_seq_len, embed_dim)
+        # pre-trained glove token embeddings
+        embed_dim = 300
 
         # multi-layers transformer blocks, deep network
         # paper noted they used 4*hidden_size for ff_network_hidden_size
         self.transformer_blocks = nn.ModuleList(
-            [TransformerBlock(hidden, attn_heads, hidden, dropout, attention_dropout, device) for _ in range(n_layers)])
+            [TransformerBlock(embed_dim, attn_heads, hidden, dropout, attention_dropout, device) for _ in range(n_layers)])
 
     def forward(self, x, segment_info):
         # attention masking for padded token
@@ -97,25 +96,8 @@ class BERT(nn.Module):
         # embedding the indexed sequence to sequence of vectors
         x = self.embedding(x, segment_info)
 
-        # simple embeddings
-        # positions = torch.arange(len(x), device=x.device).unsqueeze(-1)
-        # w_embed = self.w_embedding(x)
-        # x = w_embed + self.pos_embeddings(positions).expand_as(w_embed)
-
         # running over multiple transformer blocks
         for transformer in self.transformer_blocks:
             x = transformer.forward(x, mask)
 
         return x
-
-def glove_embeddings(trainable):
-    with open('./glove/imdb_weights.pkl', 'rb') as f:
-        weights_matrix = np.load(f, allow_pickle=True)
-    mtrx = torch.tensor(weights_matrix)
-    
-    embedding = nn.Embedding(mtrx.size(0), 300)
-    embedding.load_state_dict({'weight': mtrx})
-    
-    if not trainable:
-        embedding.requires_grad = False
-    return embedding
