@@ -9,18 +9,18 @@ from .embedding import BERTEmbedding
 from utils import bert_input_tensor, to_input_tensor
 
 
-class SaveModel(nn.Module):
+class BertSaveModel(nn.Module):
     def __init__(self):
         super().__init__()
 
     def save(self, path):
         params = {
-            'vocab': self.language,
+            'tokenizer': self.tokenizer,
             'state_dict': self.state_dict()
         }
         torch.save(params, path)
 
-class BERTClassificationWrapper(SaveModel):
+class BERTClassificationWrapper(BertSaveModel):
     def __init__(self, device, tokenizer, number_classes, max_seq_len, hidden, n_layers, attn_heads, dropout, attention_dropout):
         super().__init__()
         self.tokenizer = tokenizer
