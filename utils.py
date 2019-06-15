@@ -97,7 +97,7 @@ def plot_metrics(metrics, first_n=100):
     plt.plot(metrics['itr'], metrics['train_loss'],  label='train')
     plt.plot(metrics['val_itr'], metrics['val_loss'], label='validation')
     plt.legend()
-    plt.xlabel('Training Iteration')
+    plt.xlabel('Training Iteration (10 iterations per point)')
     plt.ylabel('Loss')
     plt.title('Model Loss')
     plt.show()
@@ -108,7 +108,7 @@ def plot_metrics(metrics, first_n=100):
     plt.plot(metrics['itr'], metrics['train_acc'], label='train')
     plt.plot(metrics['val_itr'], metrics['val_acc'], label='validation')
     plt.legend()
-    plt.xlabel('Training Iteration')
+    plt.xlabel('Training Iteration (10 iterations per point)')
     plt.ylabel('Accuracy')
     plt.title('Model Accuracy @ 50% Threshold')
     
@@ -137,7 +137,7 @@ def compare_metrics(metrics, first_n=100):
         plt.plot(m['itr'], m['train_loss'],  label='{}-train'.format(name))
         plt.plot(m['val_itr'], m['val_loss'], label='{}-validation'.format(name))
     plt.legend()
-    plt.xlabel('Training Iteration')
+    plt.xlabel('Training Iteration (10 iterations per point)')
     plt.ylabel('Loss')
     plt.title('Model Loss')
     plt.show()
@@ -148,7 +148,7 @@ def compare_metrics(metrics, first_n=100):
     for m, name in zip(metrics, names):
         plt.plot(m['itr'], m['train_acc'],  label='{}'.format(name))
     plt.legend()
-    plt.xlabel('Training Iteration')
+    plt.xlabel('Training Iteration (10 iterations per point)')
     plt.ylabel('Accuracy')
     plt.title('Model Training Accuracy @ 50% Threshold')
     
@@ -158,6 +158,6 @@ def compare_metrics(metrics, first_n=100):
     for m, name in zip(metrics, names):
         plt.plot(m['val_itr'], m['val_acc'], label='{}'.format(name))
     plt.legend()
-    plt.xlabel('Training Iteration')
+    plt.xlabel('Training Iteration (10 iterations per point)')
     plt.ylabel('Accuracy')
     plt.title('Model Validation Accuracy @ 50% Threshold')

@@ -11,6 +11,7 @@ Options:
     --qtest                                 quick test mode
     --load                                  load model flag
     --save                                  save model flag 
+    --test                                  run model on test set 
     --attention-dropout                     use attention dropout flag
     --seed=<int>                            seed [default: 0]
     --batch-size=<int>                      batch size [default: 128]
@@ -60,7 +61,7 @@ from language_structure import load_model, Lang
 base = Path('../aclImdb')
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-def batch_iter(data, batch_size, shuffle=False):
+def batch_iter(data, batch_size, shuffle=False, process_full_df=False):
     batch_num = math.ceil(len(data) / batch_size)
 
     if shuffle:
@@ -70,7 +71,7 @@ def batch_iter(data, batch_size, shuffle=False):
     tmpdf = data.copy()
     count = 0
     
-    while len(tmpdf) > batch_size:
+    while len(tmpdf) > 0:
         count += 1
         # grab first row
         (_, _, _, length) = tmpdf.values[0]
@@ -81,7 +82,11 @@ def batch_iter(data, batch_size, shuffle=False):
         fl_idxs = tmpdf.file_length.index
         idxs = [i for i, fl in zip(fl_idxs, file_lengths) if (fl >= lb and fl <= ub)]
 
-        if len(idxs) < batch_size / 2 and count > 6: break
+        # break early if we dont want to process the full dataframe 
+        if not process_full_df:
+            if len(idxs) < batch_size / 2 and count > 6: break
+        elif process_full_df and count % 5000 == 0:
+            print('Batch Iteration: {}'.format(count))
         
         # shuffle & get batch
         random.shuffle(idxs)
@@ -101,6 +106,19 @@ def batch_iter(data, batch_size, shuffle=False):
         
         yield sents, torch.tensor(targets, dtype=torch.float32, device=device).squeeze()
 
+def test_model(model, batch_size):
+    testdf = pd.read_csv('test.csv')
+    total_correct = 0
+    total_examples = 0
+    with torch.no_grad():
+        model.eval()
+        for sentences, targets in batch_iter(testdf, batch_size, process_full_df=True):
+            y_pred = model(sentences)
+            n_correct = accuracy(y_pred, targets)
+
+            total_correct += n_correct
+            total_examples += batch_size
+    print('Accuracy: %.4f' % (total_correct / total_examples))
 
 def accuracy(preds, targets, threshold=torch.tensor([0.5], device=device)):
     preds = (preds >= threshold).float()
@@ -118,7 +136,7 @@ def load(path, cpu=False):
         optim_checkpoint =  torch.load(model_dir + '/optimizer.pt')
 
     metrics = torch.load(model_dir + '/metrics.pt')
-    lang = model_checkpoint['vocab']
+    # lang = model_checkpoint['vocab']
 
     n_heads =           int(metrics['args']['--n-heads'])
     n_layers =          int(metrics['args']['--n-layers'])
@@ -128,18 +146,31 @@ def load(path, cpu=False):
     train_batch_size =  int(metrics['args']['--batch-size'])
     dropout =  float(metrics['args']['--dropout'])
 
+    vocab_file = './uncased_L-12_H-768_A-12/vocab.txt'
+    tokenizer = tokenization.FullTokenizer(vocab_file=vocab_file, do_lower_case=True)
+
+    model = BERTClassificationWrapper(device,
+                        tokenizer,
+                        number_classes=1,
+                        max_seq_len=max_sentence_len,
+                        hidden=hidden_size,
+                        n_layers=n_layers,
+                        attn_heads=n_heads,
+                        dropout=float(metrics['args']['--dropout']),
+                        attention_dropout=metrics['args']['--attention-dropout'])
+
     # model = TaskSpecificAttention(lang, device, embed_size, hidden_size, max_sentence_len, lang.n_words, n_heads, n_layers, dropout, 1)
 
-    model = TransformerClassifier(language=lang, 
-                                    device=device,
-                                    embed_dim=embed_size, 
-                                    hidden_dim=hidden_size,
-                                    num_embed=lang.n_words,
-                                    num_pos=max_sentence_len, 
-                                    num_heads=n_heads,
-                                    num_layers=n_layers,
-                                    dropout=dropout,
-                                    n_classes=1)
+    # model = TransformerClassifier(language=lang, 
+    #                                 device=device,
+    #                                 embed_dim=embed_size, 
+    #                                 hidden_dim=hidden_size,
+    #                                 num_embed=lang.n_words,
+    #                                 num_pos=max_sentence_len, 
+    #                                 num_heads=n_heads,
+    #                                 num_layers=n_layers,
+    #                                 dropout=dropout,
+    #                                 n_classes=1)
     # model = RNN_Self_Attention_Classifier(language=lang, device=device,
     #                                   batch_size=train_batch_size,
     #                                   embed_dim=embed_size, 
@@ -152,7 +183,7 @@ def load(path, cpu=False):
     # optimizer.load_state_dict(optim_checkpoint)
     optimizer = torch.optim.Adam(model.parameters(), lr=float(metrics['args']['--lr']))
 
-    return model, optimizer, lang, metrics
+    return model, optimizer, None, metrics
 
 def save(model_save_path, metrics, model, optimizer):
 
@@ -409,6 +440,10 @@ def main():
 
     if args['--qtest']:
         qtest(args)
+    elif args['--test']:
+        assert args['--load'], 'Must load a model for testing...'
+        model, _, _, _ = load(args['--load-from'])
+        test_model(model, int(args['--batch-size']))
     else: 
         train(args)
 
