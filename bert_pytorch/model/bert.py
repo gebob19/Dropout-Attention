@@ -20,8 +20,6 @@ class SaveModel(nn.Module):
         }
         torch.save(params, path)
 
-        
-
 class BERTClassificationWrapper(SaveModel):
     def __init__(self, device, tokenizer, number_classes, max_seq_len, hidden, n_layers, attn_heads, dropout, attention_dropout):
         super().__init__()
@@ -89,7 +87,7 @@ class BERT(nn.Module):
         # multi-layers transformer blocks, deep network
         # paper noted they used 4*hidden_size for ff_network_hidden_size
         self.transformer_blocks = nn.ModuleList(
-            [TransformerBlock(embed_dim, attn_heads, hidden, dropout, attention_dropout, device) for _ in range(n_layers)])
+            [TransformerBlock(embed_dim, attn_heads, 4 * hidden, dropout, attention_dropout, device) for _ in range(n_layers)])
 
     def forward(self, x, segment_info):
         # mask = (x > 0).unsqueeze(1).repeat(1, x.size(1), 1)
