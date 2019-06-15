@@ -106,3 +106,15 @@ class BERT(nn.Module):
             x = transformer.forward(x, mask)
 
         return x
+
+def glove_embeddings(trainable):
+    with open('./glove/imdb_weights.pkl', 'rb') as f:
+        weights_matrix = np.load(f, allow_pickle=True)
+    mtrx = torch.tensor(weights_matrix)
+    
+    embedding = nn.Embedding(mtrx.size(0), 300)
+    embedding.load_state_dict({'weight': mtrx})
+    
+    if not trainable:
+        embedding.requires_grad = False
+    return embedding
