@@ -85,8 +85,8 @@ def batch_iter(data, batch_size, shuffle=False, process_full_df=False):
         # break early if we dont want to process the full dataframe 
         if not process_full_df:
             if len(idxs) < batch_size / 2 and count > 6: break
-        elif process_full_df and count % 5000 == 0:
-            print('Batch Iteration: {}'.format(count))
+        elif process_full_df and count % 10 == 0:
+            print('Examples Left: {}'.format(len(tmpdf)))
         
         # shuffle & get batch
         random.shuffle(idxs)
