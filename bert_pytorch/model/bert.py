@@ -80,9 +80,11 @@ class BERT(nn.Module):
 
         # embedding for BERT, sum of positional, segment, token embeddings
         embed_dropout = 0. if attention_dropout else dropout
-        self.embedding = BERTEmbedding(vocab_size=vocab_size, embed_size=hidden, dropout=embed_dropout)
+        # self.embedding = BERTEmbedding(vocab_size=vocab_size, embed_size=hidden, dropout=embed_dropout)
         # pre-trained glove token embeddings
         embed_dim = 300
+        self.w_embedding = glove_embeddings(trainable=True)
+        self.pos_embeddings = nn.Embedding(max_seq_len, embed_dim)
 
         # multi-layers transformer blocks, deep network
         # paper noted they used 4*hidden_size for ff_network_hidden_size
@@ -94,7 +96,10 @@ class BERT(nn.Module):
         # torch.ByteTensor([batch_size, 1, seq_len, seq_len)
         mask = (x > 0).unsqueeze(1).repeat(1, x.size(1), 1)
         # embedding the indexed sequence to sequence of vectors
-        x = self.embedding(x, segment_info)
+        # x = self.embedding(x, segment_info)
+        positions = torch.arange(len(x), device=x.device).unsqueeze(-1)
+        w_embed = self.w_embedding(x)
+        x = w_embed + self.pos_embeddings(positions).expand_as(w_embed)
 
         # running over multiple transformer blocks
         for transformer in self.transformer_blocks:
