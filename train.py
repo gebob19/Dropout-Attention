@@ -61,7 +61,7 @@ from language_structure import load_model, Lang
 base = Path('../aclImdb')
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-def batch_iter(data, batch_size, shuffle=False, process_full_df=False):
+def batch_iter(data, batch_size, shuffle=False, process_full_df=False, show_progress=False):
     batch_num = math.ceil(len(data) / batch_size)
 
     if shuffle:
@@ -85,8 +85,8 @@ def batch_iter(data, batch_size, shuffle=False, process_full_df=False):
         # break early if we dont want to process the full dataframe 
         if not process_full_df:
             if len(idxs) < batch_size / 2 and count > 6: break
-        # elif process_full_df and count % 10 == 0:
-            # print('Examples Left: {}'.format(len(tmpdf)))
+        elif show_progress and count % 10 == 0:
+            print('Examples Left: {}'.format(len(tmpdf)))
         
         # shuffle & get batch
         random.shuffle(idxs)
@@ -109,7 +109,7 @@ def test_model(model, batch_size):
     total_examples = 0
     with torch.no_grad():
         model.eval()
-        for sentences, targets in batch_iter(testdf, batch_size, process_full_df=True):
+        for sentences, targets in batch_iter(testdf, batch_size, process_full_df=True, show_progress=True):
             y_pred = model(sentences)
             n_correct = accuracy(y_pred, targets)
 
