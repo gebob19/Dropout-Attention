@@ -420,8 +420,7 @@ def train(args):
             pp = pprint.PrettyPrinter(indent=4)
             pp.pprint(metrics)
 
-            end = 'cancel' if e != (epochs-1) else 'complete'
-            prefix = 'e={}_itr={}_{}_'.format(e, train_iter, end)
+            prefix = 'cancel_e={}_itr={}'.format(e, train_iter) if e != (epochs-1) else 'complete'
             save(prefix + model_save_path, metrics, model, optimizer)
 
 def main(): 
