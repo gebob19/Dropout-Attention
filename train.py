@@ -85,8 +85,8 @@ def batch_iter(data, batch_size, shuffle=False, process_full_df=False):
         # break early if we dont want to process the full dataframe 
         if not process_full_df:
             if len(idxs) < batch_size / 2 and count > 6: break
-        elif process_full_df and count % 10 == 0:
-            print('Examples Left: {}'.format(len(tmpdf)))
+        # elif process_full_df and count % 10 == 0:
+            # print('Examples Left: {}'.format(len(tmpdf)))
         
         # shuffle & get batch
         random.shuffle(idxs)
@@ -99,10 +99,7 @@ def batch_iter(data, batch_size, shuffle=False, process_full_df=False):
         # open, clean, index txt files 
         results = prepare_df(batchdf, base)
         results = sorted(results, key=lambda e: len(e[0].split(' ')), reverse=True)
-        # sents, targets = [e[0].split(' ') for e in results], [e[1] for e in results]
         sents, targets = [e[0] for e in results], [e[1] for e in results]
-
-        # sents = clip_sents(sents, max_sentence_len)
         
         yield sents, torch.tensor(targets, dtype=torch.float32, device=device).squeeze()
 
@@ -344,8 +341,7 @@ def train(args):
             total_correct = total_examples = 0
             begin_time = time.time()
             
-            # train
-            for sents, targets in batch_iter(train_df, train_batch_size, shuffle=True):
+            for sents, targets in batch_iter(train_df, train_batch_size, process_full_df=True, shuffle=True):
                 torch.cuda.empty_cache()
                 start_train_time = time.time()
                 train_iter += 1 
@@ -417,8 +413,6 @@ def train(args):
                             loss_m[-1], accuracy_m[-1],
                             val_loss_m[-1], val_accuracy_m[-1],
                             time.time() - begin_time), file=sys.stderr)
-
-                # if args['--qtest'] and train_iter > 50: break
 
     finally:
         if args['--save']:
