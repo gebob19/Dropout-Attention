@@ -25,15 +25,15 @@ class BERTEmbedding(nn.Module):
         super().__init__()
         # self.token = TokenEmbedding(vocab_size=vocab_size, embed_size=embed_size)
         self.token = glove_embeddings(trainable=True)
-        self.position = PositionalEmbedding(d_model=self.token.embedding_dim)
-        self.segment = SegmentEmbedding(embed_size=self.token.embedding_dim)
+        # self.position = PositionalEmbedding(d_model=self.token.embedding_dim)
+        # self.segment = SegmentEmbedding(embed_size=self.token.embedding_dim)
         self.dropout = nn.Dropout(p=dropout)
         self.embed_size = embed_size
 
     def forward(self, sequence, segment_label):
-        x = self.token(sequence) + self.position(sequence) #+ self.segment(segment_label)
-        return x
-        # return self.dropout(x)
+        # removed position b/c model couldn't learn with it
+        x = self.token(sequence) #+ self.position(sequence) + self.segment(segment_label)
+        return self.dropout(x)
 
 
 def glove_embeddings(trainable):
