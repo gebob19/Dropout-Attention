@@ -22,11 +22,12 @@ class TransformerBlock(nn.Module):
         super().__init__()
         self.device = device
         
+        # SublayerConnection = sublayer(), dropout, skip-connection, layernorm
         self.input_sublayer = SublayerConnection(device, size=hidden, dropout=dropout, attention_dropout=attention_dropout)
         self.output_sublayer = SublayerConnection(device, size=hidden, dropout=dropout, attention_dropout=attention_dropout)
 
-        self.ln1 = nn.LayerNorm(hidden, eps=1e-12)
-        self.ln2 = nn.LayerNorm(hidden, eps=1e-12)
+        # self.ln1 = nn.LayerNorm(hidden, eps=1e-12)
+        # self.ln2 = nn.LayerNorm(hidden, eps=1e-12)
 
         # DONT APPLY DROPOUT ELSE WHERE
         if attention_dropout:
@@ -41,16 +42,16 @@ class TransformerBlock(nn.Module):
         self.dropout = nn.Dropout(p=dropout)
 
     def forward(self, h, mask):
-        x, _ = self.attention(h, h, h)
-        x = self.dropout(x)
-        h = self.ln1(x + h)
+        # x, _ = self.attention(h, h, h)
+        # x = self.dropout(x)
+        # h = self.ln1(x + h)
 
-        x = self.feed_forward(h)
-        x = self.dropout(x)
-        h = self.ln2(x + h)
+        # x = self.feed_forward(h)
+        # x = self.dropout(x)
+        # h = self.ln2(x + h)
 
-        # x = self.input_sublayer(x, lambda _x: self.attention(_x, _x, _x, need_weights=False)[0])
-        # x = self.output_sublayer(x, self.feed_forward)
-        # x = self.dropout(x) 
+        x = self.input_sublayer(x, lambda _x: self.attention(_x, _x, _x, need_weights=False)[0])
+        x = self.output_sublayer(x, self.feed_forward)
+        x = self.dropout(x) 
         return h
 
