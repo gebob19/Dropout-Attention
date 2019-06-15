@@ -25,7 +25,7 @@ class SaveModel(nn.Module):
 class BERTClassificationWrapper(SaveModel):
     def __init__(self, device, tokenizer, number_classes, max_seq_len, hidden, n_layers, attn_heads, dropout, attention_dropout):
         super().__init__()
-        # self.tokenizer = tokenizer
+        self.tokenizer = tokenizer
         # self.language = language
         self.max_seq_len = max_seq_len
         self.number_classes = number_classes
@@ -33,7 +33,8 @@ class BERTClassificationWrapper(SaveModel):
         # fixed glove embeddings
         # self.embed_dim = 300
         self.embed_dim = hidden
-        self.bert = BERT(language.n_words, 
+        self.bert = BERT(len(tokenizer.vocab),
+            # language.n_words, 
                          device, 
                          max_seq_len,
                          hidden, 
@@ -82,7 +83,7 @@ class BERT(nn.Module):
         # embedding for BERT, sum of positional, segment, token embeddings
         embed_dropout = 0. if attention_dropout else dropout
         # pre-trained glove token embeddings
-        embed_dim = 300
+        embed_dim = hidden
         self.embedding = BERTEmbedding(vocab_size=vocab_size, embed_size=hidden, dropout=embed_dropout)
 
         # multi-layers transformer blocks, deep network
