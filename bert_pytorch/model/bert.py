@@ -23,15 +23,16 @@ class SaveModel(nn.Module):
         
 
 class BERTClassificationWrapper(SaveModel):
-    def __init__(self, device, language, number_classes, max_seq_len, hidden, n_layers, attn_heads, dropout, attention_dropout):
+    def __init__(self, device, tokenizer, number_classes, max_seq_len, hidden, n_layers, attn_heads, dropout, attention_dropout):
         super().__init__()
         # self.tokenizer = tokenizer
-        self.language = language
+        # self.language = language
         self.max_seq_len = max_seq_len
         self.number_classes = number_classes
         self.device = device
         # fixed glove embeddings
-        self.embed_dim = 300
+        # self.embed_dim = 300
+        self.embed_dim = hidden
         self.bert = BERT(language.n_words, 
                          device, 
                          max_seq_len,
@@ -44,8 +45,8 @@ class BERTClassificationWrapper(SaveModel):
         
     def forward(self, sentences):
         # tokenize + id sentences using bert tokenizer
-        # x, _ = bert_input_tensor(self.tokenizer, sentences, self.max_seq_len, self.device)
-        x, _ = to_input_tensor(self.language, sentences, self.max_seq_len, self.device)
+        x, _ = bert_input_tensor(self.tokenizer, sentences, self.max_seq_len, self.device)
+        # x, _ = to_input_tensor(self.language, sentences, self.max_seq_len, self.device)
 
         # model pass through
         x = self.bert(x, segment_info=None)

@@ -228,14 +228,14 @@ def train(args):
     else: 
         lang = load_model()
         lang = lang.top_n_words_model(n_words, glove=True)
-        # vocab_file = './uncased_L-12_H-768_A-12/vocab.txt'
-        # tokenizer = tokenization.FullTokenizer(vocab_file=vocab_file, do_lower_case=True)
+        vocab_file = './uncased_L-12_H-768_A-12/vocab.txt'
+        tokenizer = tokenization.FullTokenizer(vocab_file=vocab_file, do_lower_case=True)
 
         hidden_size = int(args['--hidden-size'])
         embed_size = int(args['--embed-size'])
 
         model = BERTClassificationWrapper(device,
-                                lang,
+                                tokenizer,
                                 number_classes=1,
                                 max_seq_len=max_sentence_len,
                                 hidden=hidden_size,
