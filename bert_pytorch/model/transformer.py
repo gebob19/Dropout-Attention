@@ -41,7 +41,7 @@ class TransformerBlock(nn.Module):
                                         nn.Linear(feed_forward_hidden, hidden))
         self.dropout = nn.Dropout(p=dropout)
 
-    def forward(self, h, mask):
+    def forward(self, x, mask):
         # x, _ = self.attention(h, h, h)
         # x = self.dropout(x)
         # h = self.ln1(x + h)
@@ -53,5 +53,5 @@ class TransformerBlock(nn.Module):
         x = self.input_sublayer(x, lambda _x: self.attention(_x, _x, _x, need_weights=False)[0])
         x = self.output_sublayer(x, self.feed_forward)
         x = self.dropout(x) 
-        return h
+        return x
 
