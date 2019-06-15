@@ -70,16 +70,14 @@ class BERT(nn.Module):
         self.n_layers = n_layers
         self.attn_heads = attn_heads
 
-        # paper noted they used 4*hidden_size for ff_network_hidden_size
-        self.feed_forward_hidden = hidden * 4
-
         # embedding for BERT, sum of positional, segment, token embeddings
         embed_dropout = 0. if attention_dropout else dropout
         self.embedding = BERTEmbedding(vocab_size=vocab_size, embed_size=hidden, dropout=embed_dropout)
 
         # multi-layers transformer blocks, deep network
+        # paper noted they used 4*hidden_size for ff_network_hidden_size
         self.transformer_blocks = nn.ModuleList(
-            [TransformerBlock(hidden, attn_heads, hidden, dropout, attention_dropout, device) for _ in range(n_layers)])
+            [TransformerBlock(hidden, attn_heads, hidden * 4, dropout, attention_dropout, device) for _ in range(n_layers)])
 
     def forward(self, x, segment_info):
         # attention masking for padded token

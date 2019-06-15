@@ -59,10 +59,8 @@ class TaskSpecificAttention(SaveModel):
             self.mhas.append(nn.MultiheadAttention(embed_dim, num_heads, dropout=dropout))
             # self.mhas.append(nn.MultiheadAttention(embed_dim, num_heads, dropout=0))
             self.ff.append(nn.Sequential(nn.Linear(embed_dim, hidden_dim),
-                                                    nn.ReLU(), 
-                                                    nn.Linear(hidden_dim, hidden_dim),
-                                                    nn.ReLU(),
-                                                    nn.Linear(hidden_dim, embed_dim)))
+                                        nn.ReLU(), 
+                                        nn.Linear(hidden_dim, embed_dim)))
             self.ln_1.append(nn.LayerNorm(embed_dim, eps=1e-12))
             self.ln_2.append(nn.LayerNorm(embed_dim, eps=1e-12))
             self.tasks.append(i)
@@ -117,11 +115,11 @@ class TaskSpecificAttention(SaveModel):
             h = lnorm_2(h)
 
         # bs, seq, embed_dim
-        h = h.transpose(0, 1)
+        # h = h.transpose(0, 1)
 
         # BERT classification head 
         # bs, embed_dim
-        x = h[:, 0, :]
+        x = h[0, :, :]
 
         # m, _ = torch.max(h, -2)
         y = torch.sigmoid(self.classify(x)).squeeze()
