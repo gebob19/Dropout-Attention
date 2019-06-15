@@ -74,7 +74,6 @@ class TaskSpecificAttention(SaveModel):
         positions = torch.arange(len(x), device=x.device).unsqueeze(-1)
         w_embed = self.w_embedding(x)
         h = w_embed + self.pos_embeddings(positions).expand_as(w_embed)
-        h = h + self.pos_embeddings(positions).expand_as(h)
 
         for task, mha, feed_forward, lnorm_1, lnorm_2 in zip(self.tasks, self.mhas, self.ff, self.ln_1, self.ln_2):
         # for task, mha, lnorm_1 in zip(self.tasks, self.mhas, self.ln_1):
