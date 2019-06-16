@@ -324,6 +324,7 @@ def train(args):
     val_accuracy_m = [0]
     absolute_start_time = time.time()
     absolute_train_time = 0
+    decrease_dropout_waiter = 200
 
     def get_metrics():
         return {'train_loss':loss_m,
@@ -347,6 +348,7 @@ def train(args):
                 torch.cuda.empty_cache()
                 start_train_time = time.time()
                 train_iter += 1 
+                decrease_dropout_waiter -= 1
                 optimizer.zero_grad()
                 
                 preds = model(sents)
@@ -417,13 +419,14 @@ def train(args):
                             time.time() - begin_time), file=sys.stderr)
 
                 # decrease attention dropout every n-steps of no-increase training score
-                if train_iter % 100 == 0 and train_iter > 0:
+                if decrease_dropout_waiter < 0:
                     best_train = max(accuracy_m)
                     best_last_n = max(accuracy_m[-int(args['--decrease-dropout']):])
                     if best_train != best_last_n:
                         dropout = dropout - 0.1
                         if dropout > 0.:
                             model.update_dropout(dropout)
+                            decrease_dropout_waiter = 200
                             print('Decreased dropout to {}...'.format(dropout))
 
     finally:
@@ -432,7 +435,7 @@ def train(args):
             pp = pprint.PrettyPrinter(indent=4)
             pp.pprint(metrics)
 
-            prefix = 'cancel_e={}_itr={}'.format(e, train_iter) if e != (epochs-1) else 'complete'
+            prefix = 'cancel_e={}_itr={}'.format(e, train_iter) if e != (epochs-1) else 'complete_'
             save(prefix + model_save_path, metrics, model, optimizer)
 
 def main(): 
