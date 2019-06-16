@@ -33,6 +33,7 @@ Options:
     --n-layers=<int>                        n of transfomer layers stacked [default: 3]
     --dset-size=<int>                       size of the dataset (for quick testing) [default: 0]
     --decrease-dropout=<int>                how many training iterations will pass of non-improvement before decreasing the dropout rate [default: 10]
+    --start-decrease=<int>                  when to start to begin to decrease dropout %
 """
 
 import sys
@@ -324,7 +325,7 @@ def train(args):
     val_accuracy_m = [0]
     absolute_start_time = time.time()
     absolute_train_time = 0
-    decrease_dropout_waiter = 200
+    decrease_dropout_waiter = int(args['--start-decrease'])
 
     def get_metrics():
         return {'train_loss':loss_m,
@@ -426,7 +427,7 @@ def train(args):
                         dropout = dropout - 0.1
                         if dropout > 0.:
                             model.update_dropout(dropout)
-                            decrease_dropout_waiter = 200
+                            decrease_dropout_waiter = int(args['--start-decrease'])
                             print('Decreased dropout to {}...'.format(dropout))
 
     finally:
