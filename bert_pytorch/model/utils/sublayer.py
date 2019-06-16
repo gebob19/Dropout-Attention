@@ -16,7 +16,7 @@ class SublayerConnection(nn.Module):
         self.dropout = nn.Dropout(dropout)
         self.attention_dropout = attention_dropout
         if attention_dropout:
-            self.layer_embedding = torch.randn((size), device=device, requires_grad=True)
+            self.layer_embedding = torch.randn((size), device=device, requires_grad=False)
             self.task_attention = TaskAttention(device, dropout)
 
     def forward(self, x, sublayer):
