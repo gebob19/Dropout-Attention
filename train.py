@@ -373,7 +373,7 @@ def train(args):
                     n_examples = n_correct = b_val_loss = 0
 
                     with torch.no_grad():
-                        for i, (val_sents, val_targets) in enumerate(batch_iter(test_df, train_batch_size)):
+                        for val_sents, val_targets in batch_iter(test_df, train_batch_size, shuffle=True, process_full_df=True):
                             val_preds = model(val_sents)
                             batch_n_correct = accuracy(val_preds, val_targets)
                             vloss = loss_fcn(val_preds, val_targets)
