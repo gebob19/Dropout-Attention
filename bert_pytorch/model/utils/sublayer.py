@@ -31,6 +31,10 @@ class SublayerConnection(nn.Module):
             h = self.dropout(h)
         return self.norm(x + h)
 
+    def update_dropout(self, new_dropout):
+        if self.attention_dropout:
+            self.task_attention.dropout = new_dropout
+
 class TaskAttention(nn.Module):
     def __init__(self, device, dropout):
         super().__init__()

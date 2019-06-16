@@ -54,6 +54,9 @@ class BERTClassificationWrapper(BertSaveModel):
             y = torch.softmax(x, -1)
         return y.squeeze()
 
+    def update_dropout(self, new_dropout):
+        self.bert.update_dropout(new_dropout)
+
 class BERT(nn.Module):
     """
     BERT model : Bidirectional Encoder Representations from Transformers.
@@ -93,6 +96,10 @@ class BERT(nn.Module):
             x = transformer.forward(x) #mask)
 
         return x
+
+    def update_dropout(self, new_dropout):
+        for transformer in self.transformer_blocks:
+            transformer.update_dropout(new_dropout)
 
 def glove_embeddings(trainable):
     with open('./glove/imdb_weights.pkl', 'rb') as f:

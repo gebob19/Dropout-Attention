@@ -42,3 +42,6 @@ class TransformerBlock(nn.Module):
         x = self.dropout(x) 
         return x
 
+    def update_dropout(self, new_dropout):
+        self.input_sublayer.update_dropout(new_dropout)
+        self.output_sublayer.update_dropout(new_dropout)

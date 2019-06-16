@@ -32,6 +32,7 @@ Options:
     --n-heads=<int>                         n of parralel attention layers in MHA [default: 1]
     --n-layers=<int>                        n of transfomer layers stacked [default: 3]
     --dset-size=<int>                       size of the dataset (for quick testing) [default: 0]
+    --decrease-dropout=<int>                how many training iterations will pass of non-improvement before decreasing the dropout rate [default: 10]
 """
 
 import sys
@@ -231,6 +232,7 @@ def train(args):
     max_sentence_len =  int(args['--max-sent-len'])
     n_heads =           int(args['--n-heads'])
     n_layers =          int(args['--n-layers'])
+    dropout =           float(args['--dropout'])
 
     assert train_batch_size <= n_valid, "Batch Size must be > Number of Validations"
 
@@ -269,7 +271,7 @@ def train(args):
                                 hidden=hidden_size,
                                 n_layers=n_layers,
                                 attn_heads=n_heads,
-                                dropout=float(args['--dropout']),
+                                dropout=dropout,
                                 attention_dropout=args['--attention-dropout'])
 
         # model = TaskSpecificAttention(lang, 
@@ -398,9 +400,9 @@ def train(args):
                         print("Warning: division by zero in validation avoided", file=sys.stderr)
 
                     model.train()
-
+                
+                # track + log results 
                 if train_iter % int(args['--log-every']) == 0:
-                    # track metrics
                     loss_m.append(round(epoch_loss / train_iter, 4))
                     accuracy_m.append(total_correct / total_examples)
                     train_itrs.append(train_iter)
@@ -413,6 +415,16 @@ def train(args):
                             loss_m[-1], accuracy_m[-1],
                             val_loss_m[-1], val_accuracy_m[-1],
                             time.time() - begin_time), file=sys.stderr)
+
+                # decrease attention dropout every n-steps of no-increase training score
+                if len(accuracy_m) > 10:
+                    best_train = max(accuracy_m)
+                    best_last_n = max(accuracy_m[-int(args['--decrease-dropout']):])
+                    if best_train != best_last_n or True:
+                        dropout = dropout - 0.1
+                        if dropout > 0.:
+                            model.update_dropout(dropout)
+                            print('Decreased dropout to {}...'.format(dropout))
 
     finally:
         if args['--save']:
