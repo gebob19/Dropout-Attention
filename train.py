@@ -33,7 +33,7 @@ Options:
     --n-layers=<int>                        n of transfomer layers stacked [default: 3]
     --dset-size=<int>                       size of the dataset (for quick testing) [default: 0]
     --decrease-dropout=<int>                how many training iterations will pass of non-improvement before decreasing the dropout rate [default: 10]
-    --start-decrease=<int>                  when to start to begin to decrease dropout %
+    --start-decrease=<int>                  when to start to begin to decrease dropout % [default: 100]
 """
 
 import sys
