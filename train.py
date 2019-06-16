@@ -382,7 +382,7 @@ def train(args):
                             n_correct += batch_n_correct
                             n_examples += train_batch_size
 
-                            if i > 1: break
+                            if n_examples > int(args['--n-valid']): break
 
                     if n_examples:
                         val_acc = n_correct / n_examples
