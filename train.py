@@ -420,15 +420,15 @@ def train(args):
                             time.time() - begin_time), file=sys.stderr)
 
                 # decrease attention dropout every n-steps of no-increase training score
-                if decrease_dropout_waiter < 0:
-                    best_train = max(accuracy_m)
-                    best_last_n = max(accuracy_m[-int(args['--decrease-dropout']):])
-                    if best_train != best_last_n:
-                        dropout = dropout - 0.1
-                        if dropout > 0.:
-                            model.update_dropout(dropout)
-                            decrease_dropout_waiter = int(args['--start-decrease'])
-                            print('Decreased dropout to {}...'.format(dropout))
+                # if decrease_dropout_waiter < 0:
+                #     best_train = max(accuracy_m)
+                #     best_last_n = max(accuracy_m[-int(args['--decrease-dropout']):])
+                #     if best_train != best_last_n:
+                #         dropout = dropout - 0.1
+                #         if dropout > 0.:
+                #             model.update_dropout(dropout)
+                #             decrease_dropout_waiter = int(args['--start-decrease'])
+                #             print('Decreased dropout to {}...'.format(dropout))
 
     finally:
         if args['--save']:
