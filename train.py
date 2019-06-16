@@ -24,7 +24,6 @@ Options:
     --lr=<float>                            learning rate [default: 0.001]
     --save-to=<file>                        model save path [default: default-model]
     --load-from=<file>                      model load path [default: default-model]
-    --valid-niter=<int>                     perform validation after how many iterations [default: 500]
     --n-valid=<int>                         number of samples to validate on [default: 10000]
     --dropout=<float>                       dropout [default: 0.3]
     --n-words=<int>                         number of words in language model [default: 10000]
@@ -214,7 +213,6 @@ def qtest(args):
     args['--log-every'] = '2'
     args['--validate-every'] = '1'
     args['--n-valid'] = '8'
-    args['--valid-niter'] = '3'
     
     args['--save-to'] = 'quick_test_model'
 
@@ -369,7 +367,7 @@ def train(args):
                 absolute_train_time += time.time() - start_train_time
 
                 # perform validation
-                if (e > 1 or train_iter > int(args['--valid-niter'])) and train_iter % valid_niter == 0:
+                if train_iter % valid_niter == 0 and train_iter > 0:
                     model.eval()
                     n_examples = n_correct = b_val_loss = 0
 
