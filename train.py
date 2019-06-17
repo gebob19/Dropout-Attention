@@ -123,63 +123,47 @@ def accuracy(preds, targets, threshold=torch.tensor([0.5], device=device)):
     n_correct = torch.eq(preds, targets).sum().item()
     return n_correct
 
-def load(path, cpu=False):
+def load(path, cpu=False, load_model=True):
     model_dir = 'model_saves/' + path
-
-    if cpu:
-        model_checkpoint = torch.load(model_dir + '/model.bin', map_location=lambda storage, loc: storage)
-        optim_checkpoint =  torch.load(model_dir + '/optimizer.pt', map_location=lambda storage, loc: storage)
-    else:
-        model_checkpoint = torch.load(model_dir + '/model.bin')
-        optim_checkpoint =  torch.load(model_dir + '/optimizer.pt')
-
     metrics = torch.load(model_dir + '/metrics.pt')
     # lang = model_checkpoint['vocab']
 
-    n_heads =           int(metrics['args']['--n-heads'])
-    n_layers =          int(metrics['args']['--n-layers'])
-    embed_size =        int(metrics['args']['--embed-size'])
-    hidden_size =       int(metrics['args']['--hidden-size'])
-    max_sentence_len =  int(metrics['args']['--max-sent-len'])
-    train_batch_size =  int(metrics['args']['--batch-size'])
-    dropout =  float(metrics['args']['--dropout'])
+    if load_model:
+        if cpu:
+            model_checkpoint = torch.load(model_dir + '/model.bin', map_location=lambda storage, loc: storage)
+            optim_checkpoint =  torch.load(model_dir + '/optimizer.pt', map_location=lambda storage, loc: storage)
+        else:
+            model_checkpoint = torch.load(model_dir + '/model.bin')
+            optim_checkpoint =  torch.load(model_dir + '/optimizer.pt')
 
-    vocab_file = './uncased_L-12_H-768_A-12/vocab.txt'
-    tokenizer = tokenization.FullTokenizer(vocab_file=vocab_file, do_lower_case=True)
+        n_heads =           int(metrics['args']['--n-heads'])
+        n_layers =          int(metrics['args']['--n-layers'])
+        embed_size =        int(metrics['args']['--embed-size'])
+        hidden_size =       int(metrics['args']['--hidden-size'])
+        max_sentence_len =  int(metrics['args']['--max-sent-len'])
+        train_batch_size =  int(metrics['args']['--batch-size'])
+        dropout =  float(metrics['args']['--dropout'])
 
-    model = BERTClassificationWrapper(device,
-                        tokenizer,
-                        number_classes=1,
-                        max_seq_len=max_sentence_len,
-                        hidden=hidden_size,
-                        n_layers=n_layers,
-                        attn_heads=n_heads,
-                        dropout=float(metrics['args']['--dropout']),
-                        attention_dropout=metrics['args']['--attention-dropout'])
+        vocab_file = './uncased_L-12_H-768_A-12/vocab.txt'
+        tokenizer = tokenization.FullTokenizer(vocab_file=vocab_file, do_lower_case=True)
 
-    # model = TaskSpecificAttention(lang, device, embed_size, hidden_size, max_sentence_len, lang.n_words, n_heads, n_layers, dropout, 1)
+        model = BERTClassificationWrapper(device,
+                            tokenizer,
+                            number_classes=1,
+                            max_seq_len=max_sentence_len,
+                            hidden=hidden_size,
+                            n_layers=n_layers,
+                            attn_heads=n_heads,
+                            dropout=float(metrics['args']['--dropout']),
+                            attention_dropout=metrics['args']['--attention-dropout'])
 
-    # model = TransformerClassifier(language=lang, 
-    #                                 device=device,
-    #                                 embed_dim=embed_size, 
-    #                                 hidden_dim=hidden_size,
-    #                                 num_embed=lang.n_words,
-    #                                 num_pos=max_sentence_len, 
-    #                                 num_heads=n_heads,
-    #                                 num_layers=n_layers,
-    #                                 dropout=dropout,
-    #                                 n_classes=1)
-    # model = RNN_Self_Attention_Classifier(language=lang, device=device,
-    #                                   batch_size=train_batch_size,
-    #                                   embed_dim=embed_size, 
-    #                                   hidden_dim=hidden_size,
-    #                                   num_embed=lang.n_words,
-    #                                   n_classes=1)
-    optimizer = torch.optim.Adam(model.parameters())
-    
-    model.load_state_dict(model_checkpoint['state_dict'])
-    # optimizer.load_state_dict(optim_checkpoint)
-    optimizer = torch.optim.Adam(model.parameters(), lr=float(metrics['args']['--lr']))
+        optimizer = torch.optim.Adam(model.parameters())
+        
+        model.load_state_dict(model_checkpoint['state_dict'])
+        # optimizer.load_state_dict(optim_checkpoint)
+        optimizer = torch.optim.Adam(model.parameters(), lr=float(metrics['args']['--lr']))
+    else:
+        model, optimizer = None, None
 
     return model, optimizer, None, metrics
 
