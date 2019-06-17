@@ -19,14 +19,14 @@ class SublayerConnection(nn.Module):
             self.layer_embedding = torch.randn((size), device=device, requires_grad=True)
             self.task_attention = TaskAttention(device, dropout)
 
-    def forward(self, x, sublayer):
+    def forward(self, x, sublayer, lengths):
         "Apply residual connection to any sublayer with the same size."
         h = sublayer(x)
         # apply dropout of choice
         if self.attention_dropout and self.training:
             bs = x.size(1)
             batch_task = self.layer_embedding.repeat(bs).view(bs, -1).unsqueeze(-1)
-            h = h * self.task_attention(h, batch_task)
+            h = h * self.task_attention(h, batch_task, lengths)
         else:
             h = self.dropout(h)
         return self.norm(x + h)
@@ -41,7 +41,7 @@ class TaskAttention(nn.Module):
         self.device = device
         self.dropout = dropout
         
-    def forward(self, q, k):
+    def forward(self, q, k, lengths):
         q = q.transpose(0, 1) 
         
         # restricted attention dropout
@@ -61,6 +61,10 @@ class TaskAttention(nn.Module):
         byte_mask = torch.ones_like(w)
         for bm, mask in zip(torch.split(byte_mask, 1), attnmask):
             bm.squeeze()[mask] = 0. 
+        # # ignore paddings
+        # for i, length in enumerate(lengths):
+        #     bm[i, length:, :] = 0.
+
         w = byte_mask.to(self.device).unsqueeze(-1)
 
         w = w.transpose(0, 1)

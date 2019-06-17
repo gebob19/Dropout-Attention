@@ -40,10 +40,10 @@ class BERTClassificationWrapper(BertSaveModel):
         
     def forward(self, sentences):
         # tokenize + id sentences using bert tokenizer
-        x, _ = bert_input_tensor(self.tokenizer, sentences, self.max_seq_len, self.device)
+        x, lengths = bert_input_tensor(self.tokenizer, sentences, self.max_seq_len, self.device)
 
         # model pass through
-        x = self.bert(x, segment_info=None)
+        x = self.bert(x, segment_info=None, lengths=lengths)
         
         # embedding of [CLS]
         x = self.linear(x[0, :, :])
@@ -85,7 +85,7 @@ class BERT(nn.Module):
         self.transformer_blocks = nn.ModuleList(
             [TransformerBlock(hidden, attn_heads, 4 * hidden, dropout, attention_dropout, device) for _ in range(n_layers)])
 
-    def forward(self, x, segment_info):
+    def forward(self, x, segment_info, lengths):
         # mask = (x > 0).unsqueeze(1).repeat(1, x.size(1), 1)
 
         # embedding the indexed sequence to sequence of vectors
@@ -93,7 +93,7 @@ class BERT(nn.Module):
 
         # running over multiple transformer blocks
         for transformer in self.transformer_blocks:
-            x = transformer.forward(x) #mask)
+            x = transformer.forward(x, lengths) #mask)
 
         return x
 
