@@ -1,3 +1,5 @@
 # Layer-Specific Dropout with Attention
 
-Coming Soon...
+Please see notebook, `IMBD-BERT Attention Dropout Analysis .ipynb`.
+
+More Coming Soon...
