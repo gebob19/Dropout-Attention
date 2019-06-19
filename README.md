@@ -45,16 +45,36 @@ The dataset used was the Large Movie Review Dataset [1]. The Transformer model [
 
 # Results
 
-... Coming Soon ...
+## 6-Layer Transformer (1 Epoch - Full Dataset)
+> Test Accuracy <br/>
+> Attention Dropout: 0.8494 <br/>
+> Dropout: 0.8354 
 
-For more results please see the notebook, `IMBD-BERT Attention Dropout Analysis .ipynb`.
+### Training
+
+### Validation
+
+## 12-Layer Transformer (1 Epoch - Full Dataset)
+> Test Accuracy: <br/>
+> Attention Dropout:    0.8489 <br/>
+> Dropout:              0.4865 
+
+### Training
+
+### Validation
+
+## 1-Layer Transformer (1 Epoch - 5K Subset)
+> Test Accuracy: <br/>
+> Attention Dropout: 0.6704 <br/>
+> Dropout: 0.5759 
+
+For more results please see the notebook, `IMBD-BERT Attention Dropout Analysis.ipynb`.
 
 # Analysis
 
 # Considerations 
 
 The general idea of the technique is very easy to implement and can be applied across many different areas including computer vision, skip-connections, layer-to-layer attention and more. Though only dropout attention is investigated in this project, other variations may be investigated in future research.
-
 
 # References
 
