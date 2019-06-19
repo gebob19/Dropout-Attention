@@ -23,7 +23,7 @@ We will show that the purposed mechanism improves interpratibility, time to trai
 
 # Algorithm
 
-Assume the input is of a single batch of size (*sequence_length*, *hidden*). Each vector across the sequence length will be referred to as a word-vector. The algorithm would be act the same with batch sizes greater than 1.
+Assume the input is of a single batch of size (*sequence_length*, *hidden*). Each vector across the sequence length will be referred to as a word-vector. The algorithm would act the same with batch sizes greater than one.
 
 Each layer in the network will have a unique corresponding vector (initialized randomly) of size *hidden*. This vector will be called the layer-vector. 
 
