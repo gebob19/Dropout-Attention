@@ -64,7 +64,7 @@ The dataset used was the Large Movie Review Dataset [1]. The Transformer model [
 ![alt text](https://github.com/gebob19/Dropout-Attention/tree/master/images/12layer-train.png)
 
 ### Validation
-![alt text](https://github.com/gebob19/Dropout-Attention/tree/master/images/12layer-validation.png)
+![alt text](https://github.com/gebob19/Dropout-Attention/tree/master/images/12layer-val.png)
 
 ## 1-Layer Transformer (1 Epoch - 5K Subset)
 > Test Accuracy: <br/>
