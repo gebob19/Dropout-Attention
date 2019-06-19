@@ -51,8 +51,9 @@ The dataset used was the Large Movie Review Dataset [1]. The Transformer model [
 > Dropout: 0.8354 
 
 ### Training
-
+![alt text](https://github.com/gebob19/Dropout-Attention/tree/master/images/6layer-train.png) 
 ### Validation
+![alt text](https://github.com/gebob19/Dropout-Attention/tree/master/images/6layer-validation.png)
 
 ## 12-Layer Transformer (1 Epoch - Full Dataset)
 > Test Accuracy: <br/>
@@ -60,8 +61,10 @@ The dataset used was the Large Movie Review Dataset [1]. The Transformer model [
 > Dropout:              0.4865 
 
 ### Training
+![alt text](https://github.com/gebob19/Dropout-Attention/tree/master/images/12layer-train.png)
 
 ### Validation
+![alt text](https://github.com/gebob19/Dropout-Attention/tree/master/images/12layer-validation.png)
 
 ## 1-Layer Transformer (1 Epoch - 5K Subset)
 > Test Accuracy: <br/>
