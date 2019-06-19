@@ -72,6 +72,8 @@ For more results please see the notebook, `IMBD-BERT Attention Dropout Analysis.
 
 # Analysis
 
+
+
 # Considerations 
 
 The general idea of the technique is very easy to implement and can be applied across many different areas including computer vision, skip-connections, layer-to-layer attention and more. Though only dropout attention is investigated in this project, other variations may be investigated in future research.
