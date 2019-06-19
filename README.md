@@ -88,7 +88,7 @@ Doubling the number of layers, we see that the model which uses Attention Dropou
 ### 1-Layer Transformer - 5K Subset
 To test the hypothesis that Attention Dropout allows models to learn faster we trained on a 5K subset of the training data for one epoch. We see that the model which uses Attention Dropout achieves test-accuracy 10% better than the model which uses Vanilla Dropout. 
 
-# Considerations 
+# Future Research
 
 The general idea of the technique is very easy to implement and can be applied across many different areas including computer vision, skip-connections, layer-to-layer attention and more. Though only dropout attention is investigated in this project, other variations may be investigated in future research.
 
