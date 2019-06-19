@@ -19,7 +19,7 @@ A disadvantage of Vanilla Dropout is that units are randomly dropped. When train
 
 ## The Model
 
-We will show that the purposed mechanism improves interpratibility, time to train, training larger models, and acts as a valid regularization technique. The mechanism is easy to implement, requires a small amount of extra trainable parameters, and shows significant improvements on the tested dataset. 
+We will show that the purposed mechanism improves interpretability, time to train, training larger models, and acts as a valid regularization technique. The mechanism is easy to implement, requires a small amount of extra trainable parameters, and shows significant improvements on the tested dataset. 
 
 # Algorithm
 
@@ -35,20 +35,20 @@ Using the attention-vector we create a probability distribution to stochasticall
 
 Let P(i) be the probability of setting all the units at index i of the sequence to zero. 
 
-P(i) = max(attention-vector) - *attention[i]*
+P(i) = max(attention-vector) - *attention-vector[i]*
 
 To satisfy the probability axioms we apply the softmax function across P(i). We then sample `max(1, sequence_length * dropout_rate)` indices, and set the corresponding word-vectors to zero.
 
 # Setup 
 
-The dataset used was the Large Movie Review Dataset [1]. The Transformer model [2] was used since it has shown great results in previous NLP tasks. The Dropout-Attention layers were included after the Multihead-Attention and Feedforward layers. The only difference between the two models is the type of dropout applied in intermediate layers. Hyperparameters and model size between the two models were kept the same.
+The dataset used was the Large Movie Review Dataset [1]. The Transformer model [2] was used since it has shown great results in previous NLP tasks. The Dropout Attention layers were included after the Multihead-Attention and Feedforward layers. The only difference between the two models is the type of Dropout applied to intermediate layers. Hyperparameters and model size between the two models were kept the same.
 
 # Results
 
 ## 6-Layer Transformer (1 Epoch - Full Dataset)
 > Test Accuracy <br/>
 > Attention Dropout: 0.8494 <br/>
-> Dropout: 0.8354 
+> Vanilla Dropout: 0.8354 
 
 ### Training
 ![alt text](images/6layer-train.png) 
@@ -58,7 +58,7 @@ The dataset used was the Large Movie Review Dataset [1]. The Transformer model [
 ## 12-Layer Transformer (1 Epoch - Full Dataset)
 > Test Accuracy: <br/>
 > Attention Dropout:    0.8489 <br/>
-> Dropout:              0.4865 
+> Vanilla Dropout:              0.4865 
 
 ### Training
 ![alt text](images/12layer-train.png)
@@ -69,7 +69,7 @@ The dataset used was the Large Movie Review Dataset [1]. The Transformer model [
 ## 1-Layer Transformer (1 Epoch - 5K Subset)
 > Test Accuracy: <br/>
 > Attention Dropout: 0.6704 <br/>
-> Dropout: 0.5759 
+> Vanilla Dropout: 0.5759 
 
 For more results please see the notebook, `IMBD-BERT Attention Dropout Analysis.ipynb`.
 
