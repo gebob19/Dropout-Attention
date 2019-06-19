@@ -3,33 +3,33 @@ Brennan Gebotys
 
 # Introduction
 
-This project investigates a new use of self-attention, which to the best of my knowledge is first of its kind. 
+This project investigates a new use of Natural Language Processing (NLP) Attention, which to the best of my knowledge is first of its kind. 
 
 ## Self-Attention
 
-The Transformer [2] has led to significant advances in Natural Language Processing (NLP) tasks.
-
-Its self-attention involves linear projections of vectors representing a Query, a Key, and a Value. Following the projections is a linear summation weighted by the cosine distance between the projected vectors. The summation is then concatenated with the projected vector and is the projected again from 2*hidden size to hidden size. For self-attention, the Query, Key and Value are all the same vector. 
+The Transformer [2] has led to significant advances in NLP tasks.
 
 One significant downfall of the Transformer's attention is interpretability. Given n-words, an L-layer Transformer requires analysis of L * n^2 elements. With our technique, only L * n elements are required to be analyzed.  
 
 ## Dropout
 
-Dropout [3] is a technique where units are dropped stochastically with a P(drop) at training time. It is used as a regularization technique for neural networks and is used in most architectures.
+Dropout [3] is a regularization technique where units are dropped stochastically with a P(drop) at training time. Since we are comparing Dropout techniques, we will refer to this technique as Vanilla Dropout.
 
-A disadvantage of Dropout is that units are dropped entirely at random. When training word-embeddings, Dropout can lead to a significant loss of latent-space information. We show this loss in latent-space information can hinder training larger models significantly. 
+A disadvantage of Vanilla Dropout is that units are randomly dropped. When training word-embeddings, by dropping only certain units of whole embeddings, Vanilla Dropout can lead to a significant loss of latent-space information. We show this loss in latent-space information can significantly hinder training larger models. 
 
-Our technique improves model training in less time and we show we are able to train larger models while maintaining validation accuracy without standard Dropout. 
+## The Model
+
+We will show that the purposed mechanism improves interpratibility, time to train, training larger models, and acts as a valid regularization technique. The mechanism is easy to implement, requires a small amount of extra trainable parameters, and shows significant improvements on the tested dataset. 
 
 # Algorithm
 
-Assume the input is of a single batch of size (*sequence_length*, *hidden*). Each vector across the sequence length will be refered to as a word-vector.
+Assume the input is of a single batch of size (*sequence_length*, *hidden*). Each vector across the sequence length will be referred to as a word-vector. The algorithm would be act the same with batch sizes greater than 1.
 
-Each layer in the network will have a corresponding vector (initialized randomly) of size *hidden*. This vector will be called the layer-vector. 
+Each layer in the network will have a unique corresponding vector (initialized randomly) of size *hidden*. This vector will be called the layer-vector. 
 
 Vector dot-product will be performed with the layer-vector and each word-vector. This operation will result in a vector of size (*sequence_length*, 1). This vector will be called the attention-vector. 
 
-The intuition is that each value in the attention-vector will correspond to how relevant the corresponding word-vector is to the current layer. 
+Each value in the attention-vector will correspond to how relevant the corresponding word-vector is to the current layer. 
 
 Using the attention-vector we create a probability distribution to stochastically sample the least relevant word-vectors from. 
 
@@ -37,11 +37,11 @@ Let P(i) be the probability of setting all the units at index i of the sequence 
 
 P(i) = max(attention-vector) - *attention[i]*
 
-To satisfy the probability axioms we apply the softmax function across P(i). We then sample `max(1, sequence_length * dropout_rate)` indices, and set the corresponding word-vector to all zeros.
+To satisfy the probability axioms we apply the softmax function across P(i). We then sample `max(1, sequence_length * dropout_rate)` indices, and set the corresponding word-vectors to zero.
 
 # Setup 
 
-The dataset used was the Large Movie Review Dataset [1]. The Transformer model [2] was used for tests since it has shown great results in previous Natural Language Processing (NLP) tasks. The Dropout-Attention layers were included after the Multihead-Attention and Feedforward layers. 
+The dataset used was the Large Movie Review Dataset [1]. The Transformer model [2] was used since it has shown great results in previous NLP tasks. The Dropout-Attention layers were included after the Multihead-Attention and Feedforward layers. The only difference between the two models is the type of dropout applied in intermediate layers. Hyperparameters and model size between the two models were kept the same.
 
 # Results
 
@@ -75,7 +75,18 @@ For more results please see the notebook, `IMBD-BERT Attention Dropout Analysis.
 
 # Analysis
 
+### 6-Layer Transformer
+We see that the model which uses Attention Dropout achieves a higher test accuracy. 
 
+We also see that it's training accuracy spikes ~100 iterations sooner than the model with Vanilla Dropout. This supports the hypothesis that Attention Dropout allows models to learn faster since each layer is able to ignore non-important word-vectors. 
+
+We also see from the validation graph that the algorithm is an equal regularization technique to Dropout.
+
+### 12-Layer Transformer
+Doubling the number of layers, we see that the model which uses Attention Dropout is still able to learn while the model which uses Vanilla Dropout is unable to learn. This supports the hypothesis that Attention Dropout maintains latent-space information better than Vanilla Dropout allowing larger models to learn better. 
+
+### 1-Layer Transformer - 5K Subset
+To test the hypothesis that Attention Dropout allows models to learn faster we trained on a 5K subset of the training data for one epoch. We see that the model which uses Attention Dropout achieves test-accuracy 10% better than the model which uses Vanilla Dropout. 
 
 # Considerations 
 
