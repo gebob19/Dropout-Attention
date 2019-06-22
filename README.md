@@ -3,8 +3,6 @@ Brennan Gebotys
 
 # Introduction
 
-This project investigates a new use of Natural Language Processing (NLP) Attention, which to the best of my knowledge is first of its kind. 
-
 ## Self-Attention
 
 The Transformer [2] has led to significant advances in NLP tasks.
