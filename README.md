@@ -103,3 +103,7 @@ The general idea of the technique is very easy to implement and can be applied a
 Dropout: A simple way to prevent neural networks from overfitting. The Journal of Machine
 Learning Research, 15(1):1929–1958, 2014.
 
+[4] Adam Paszke, Sam Gross, Soumith Chintala, Gregory Chanan, Edward Yang, Zachary DeVito,
+Zeming Lin, Alban Desmaison, Luca Antiga, and Adam Lerer. Automatic differentiation in
+pytorch. 2017.
+
