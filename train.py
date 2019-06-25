@@ -67,10 +67,13 @@ from dataloader import *
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 def accuracy(preds, targets, threshold=torch.tensor([0.5], device=device)):
-    y = torch.nn.functional.one_hot(targets, 2)
     y_preds = torch.softmax(preds, -1).squeeze()
     y_preds = (y_preds >= threshold).long()
-    n_correct = torch.eq(y_preds, y).sum().item()
+    n_correct = 0
+    for y_pred, y_true in zip(y_preds.split(1), targets.split(1)):
+        y_pred = y_pred.squeeze().nonzero().squeeze().detach().cpu().numpy()
+        y_true = y_true.detach().cpu().numpy()
+        n_correct += 1 if y_pred == y_true else 0
     return n_correct
 
 def load(path, cpu=False, load_model=True):
