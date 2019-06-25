@@ -15,7 +15,6 @@ class BertSaveModel(nn.Module):
 
     def save(self, path):
         params = {
-            'tokenizer': self.tokenizer,
             'state_dict': self.state_dict()
         }
         torch.save(params, path)

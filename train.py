@@ -20,7 +20,6 @@ Options:
     --COLA                                  train on the COLA dataset
     --seed=<int>                            seed [default: 0]
     --batch-size=<int>                      batch size [default: 128]
-    --embed-size=<int>                      embedding size [default: 256]
     --hidden-size=<int>                     hidden size [default: 256]
     --clip-grad=<float>                     gradient clipping [default: 5.0]
     --log-every=<int>                       log every [default: 10]
@@ -65,7 +64,6 @@ from utils import prepare_df, clip_sents
 from language_structure import load_model, Lang
 from dataloader import *
 
-base = Path('../data/aclImdb')
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 def accuracy(preds, targets, threshold=torch.tensor([0.5], device=device)):
@@ -90,7 +88,6 @@ def load(path, cpu=False, load_model=True):
 
         n_heads =           int(metrics['args']['--n-heads'])
         n_layers =          int(metrics['args']['--n-layers'])
-        embed_size =        int(metrics['args']['--embed-size'])
         hidden_size =       int(metrics['args']['--hidden-size'])
         max_sentence_len =  int(metrics['args']['--max-sent-len'])
         train_batch_size =  int(metrics['args']['--batch-size'])
@@ -137,7 +134,6 @@ def save(model_save_path, metrics, model, optimizer):
 
 def qtest(args):
     args['--batch-size'] = '2'
-    args['--embed-size'] = '100'
     args['--hidden-size'] = '10'
     args['--n-heads'] = '1'
     args['--n-layers'] =  '1'
@@ -146,7 +142,7 @@ def qtest(args):
     args['--max-sent-len'] = '100'
     
     args['--log-every'] = '2'
-    args['--validate-every'] = '1'
+    args['--validate-every'] = '2'
     args['--n-valid'] = '8'
     args['--max-epoch'] = '1'
     
@@ -189,7 +185,6 @@ def train(args):
         tokenizer = tokenization.FullTokenizer(vocab_file=vocab_file, do_lower_case=True)
 
         hidden_size = int(args['--hidden-size'])
-        embed_size = int(args['--embed-size'])
 
         model = BERTClassificationWrapper(device,
                                 len(tokenizer.vocab),
@@ -223,6 +218,7 @@ def train(args):
     time_tracker = []
     accuracy_m = []
     train_itrs = []
+    val_iters = []
     epoch_track = []
     val_loss_m = [0]
     val_accuracy_m = [0]
@@ -245,12 +241,13 @@ def train(args):
                 w2 = t.output_sublayer.dropout_attention.layer_embedding
                 w_end.append([w1, w2])
 
-        return {'train_loss':loss_m,
+        return {'train_loss': loss_m,
                 'train_acc': accuracy_m,
                 'train_iterations': train_itrs,
                 'epochs': epoch_track,
                 'val_loss': val_loss_m,
                 'val_acc': val_accuracy_m,
+                'val_iterations': val_iters,
                 'total_time': round(time.time() - absolute_start_time, 4),
                 'train_time': round(absolute_train_time, 4),
                 'seconds_spent_training': time_tracker,
@@ -263,6 +260,7 @@ def train(args):
     loss_fcn = nn.CrossEntropyLoss()
     try:
         model.train()
+        print('Training...')
         for e in range(epochs):
             epoch_loss = train_iter = val_acc = val_loss = 0
             total_correct = total_examples = 0
@@ -316,6 +314,7 @@ def train(args):
                     is_better = len(val_accuracy_m) == 0 or val_acc > max(val_accuracy_m)
                     val_loss_m.append(round(val_loss, 5))
                     val_accuracy_m.append(round(val_acc, 5))
+                    val_iters.append(train_iter)
 
                     if is_better: 
                         if args['--save']:
@@ -361,6 +360,7 @@ def train(args):
 
             prefix = 'cancel_e={}_itr={}'.format(e, train_iter) if e != (epochs-1) else 'complete_'
             save(prefix + model_save_path, metrics, model, optimizer)
+            print('Model Saved: {}'.format(prefix + model_save_path))
 
 def load_dataloader(args, tokenizer):
     # Load dataloader 
