@@ -14,7 +14,7 @@ python train.py \
 --n-valid=1000 \
 --dropout=0.1 \
 --lr=3e-5 \
---dset-size=5000 \
+--dset-size=1000 \
 --save \
 --save-to=IMDB-VD-5K-june25-1200 
 ## Attention Dropout 
@@ -31,7 +31,7 @@ python train.py \
 --n-valid=1000 \
 --dropout=0.1 \
 --lr=3e-5 \
---dset-size=5000 \
+--dset-size=1000 \
 --save \
 --attention-dropout \
 --save-to=IMDB-AD-5K-june25-1200 
@@ -51,7 +51,7 @@ python train.py \
 --n-valid=1000 \
 --dropout=0.1 \
 --lr=3e-5 \
---dset-size=5000 \
+--dset-size=1000 \
 --save \
 --save-to=COLA-VD-5K-june25-1200 
 
@@ -69,7 +69,7 @@ python train.py \
 --n-valid=1000 \
 --dropout=0.1 \
 --lr=3e-5 \
---dset-size=5000 \
+--dset-size=1000 \
 --save \
 --attention-dropout \
 --save-to=COLA-AD-5K-june25-1200
@@ -89,7 +89,7 @@ python train.py \
 --n-valid=1000 \
 --dropout=0.1 \
 --lr=3e-5 \
---dset-size=5000 \
+--dset-size=1000 \
 --save \
 --save-to=QNLI-VD-5K-june25-1200 
 ## Attention Dropout 
@@ -106,7 +106,7 @@ python train.py \
 --n-valid=1000 \
 --dropout=0.1 \
 --lr=3e-5 \
---dset-size=5000 \
+--dset-size=1000 \
 --save \
 --attention-dropout \
 --save-to=QNLI-AD-5K-june25-1200
@@ -126,7 +126,7 @@ python train.py \
 --n-valid=1000 \
 --dropout=0.1 \
 --lr=3e-5 \
---dset-size=5000 \
+--dset-size=1000 \
 --save \
 --save-to=QQP-VD-5K-june25-1200 
 ## Attention Dropout 
@@ -143,7 +143,7 @@ python train.py \
 --n-valid=1000 \
 --dropout=0.1 \
 --lr=3e-5 \
---dset-size=5000 \
+--dset-size=1000 \
 --save \
 --attention-dropout \
 --save-to=QQP-AD-5K-june25-1200
