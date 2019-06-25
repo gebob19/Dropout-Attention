@@ -29,7 +29,7 @@ class TransformerBlock(nn.Module):
         if attention_dropout:
             dropout = 0.
 
-        self.attention = nn.MultiheadAttention(hidden, attn_heads, dropout=0.)
+        self.attention = nn.MultiheadAttention(hidden, attn_heads, dropout=dropout)
         self.feed_forward = nn.Sequential(nn.Linear(hidden, feed_forward_hidden),
                                         nn.ReLU(), 
                                         nn.Linear(feed_forward_hidden, hidden))

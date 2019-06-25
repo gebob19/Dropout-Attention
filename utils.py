@@ -44,10 +44,10 @@ def clip_pad_to_max(sents, max_sentence_len, pad_token):
     resized_sents = []
     for s in sents:
         length = len(s)
-        if length > max_seq_len:
-            s = s[:max_sentence_len]
+        if length >= max_seq_len:
+            s = s[:max_seq_len]
         else:
-            s = pad(s, max_sentence_len, pad_token)
+            s = pad(s, max_seq_len, pad_token)
         resized_sents.append(s)
     return resized_sents
 
@@ -74,10 +74,6 @@ def clip_sents(sents, max_sentence_len):
 
 
 ## Vis. Helpers 
-
-    formatted_sentence.append(str(len(idxs)+1))
-    
-    return ' '.join(formatted_sentence)
 
 def plot_metrics(metrics, first_n=100):
     print("Total Time: {} \nTrain Time: {}".format(metrics['total_time'], metrics['train_time']))
@@ -128,6 +124,7 @@ def compare_metrics(metrics, first_n=100):
     for m in metrics:
         print('--------{}----------'.format(m['args']['--save-to']))
         print("Max (Validation, Train): (%.2f, %.2f)" % (max(m['val_acc']), max(m['train_acc'])))
+        print("Total Time: {} \nTrain Time: {}".format(m['total_time'], m['train_time']))
     
     figsize = (15, 15)
     

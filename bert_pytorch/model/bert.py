@@ -21,16 +21,13 @@ class BertSaveModel(nn.Module):
         torch.save(params, path)
 
 class BERTClassificationWrapper(BertSaveModel):
-    def __init__(self, device, tokenizer, number_classes, max_seq_len, hidden, n_layers, attn_heads, dropout, attention_dropout):
+    def __init__(self, device, vocab_size, number_classes, hidden, n_layers, attn_heads, dropout, attention_dropout):
         super().__init__()
-        self.tokenizer = tokenizer
-        self.max_seq_len = max_seq_len
         self.number_classes = number_classes
         self.device = device
         
-        self.bert = BERT(len(tokenizer.vocab),
+        self.bert = BERT(vocab_size,
                          device, 
-                         max_seq_len,
                          hidden, 
                          n_layers, 
                          attn_heads, 
@@ -38,21 +35,12 @@ class BERTClassificationWrapper(BertSaveModel):
                          attention_dropout)
         self.linear = nn.Linear(hidden, number_classes)
         
-    def forward(self, sentences):
-        # tokenize + id sentences using bert tokenizer
-        x, lengths = bert_input_tensor(self.tokenizer, sentences, self.max_seq_len, self.device)
-
-        # model pass through
+    def forward(self, x, lengths):
         x = self.bert(x, segment_info=None, lengths=lengths)
         
         # embedding of [CLS]
         x = self.linear(x[0, :, :])
-    
-        if self.number_classes == 1:
-            y = torch.sigmoid(x)
-        else:
-            y = torch.softmax(x, -1)
-        return y.squeeze()
+        return x
 
     def update_dropout(self, new_dropout):
         self.bert.update_dropout(new_dropout)
@@ -62,7 +50,7 @@ class BERT(nn.Module):
     BERT model : Bidirectional Encoder Representations from Transformers.
     """
 
-    def __init__(self, vocab_size, device, max_seq_len, hidden=768, n_layers=12, attn_heads=12, dropout=0.1, attention_dropout=False):
+    def __init__(self, vocab_size, device, hidden=768, n_layers=12, attn_heads=12, dropout=0.1, attention_dropout=False):
         """
         :param vocab_size: vocab_size of total words
         :param hidden: BERT model hidden size

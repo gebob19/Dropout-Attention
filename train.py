@@ -13,6 +13,11 @@ Options:
     --save                                  save model flag 
     --test                                  run model on test set 
     --attention-dropout                     use attention dropout flag
+    --IMDB                                  train on the IMDB dataset
+    --QQP                                   train on the QQP dataset
+    --QNLI                                  train on the QNLI dataset
+    --RTE                                   train on the RTE dataset
+    --COLA                                  train on the COLA dataset
     --seed=<int>                            seed [default: 0]
     --batch-size=<int>                      batch size [default: 128]
     --embed-size=<int>                      embedding size [default: 256]
@@ -58,69 +63,16 @@ from bert_pytorch.model.bert import BERTClassificationWrapper
 from bert import tokenization
 from utils import prepare_df, clip_sents
 from language_structure import load_model, Lang
+from dataloader import *
 
-base = Path('../aclImdb')
+base = Path('../data/aclImdb')
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-def batch_iter(data, batch_size, shuffle=False, process_full_df=False, show_progress=False):
-    batch_num = math.ceil(len(data) / batch_size)
-
-    if shuffle:
-        data = data.sample(frac=1.)
-
-    n = 10
-    tmpdf = data.copy()
-    count = 0
-    
-    while len(tmpdf) > 0:
-        count += 1
-        # grab first row
-        (_, _, _, length) = tmpdf.values[0]
-        lb, ub = length - n, length + n
-
-        # find similar lengthed files
-        file_lengths = tmpdf.file_length.values
-        fl_idxs = tmpdf.file_length.index
-        idxs = [i for i, fl in zip(fl_idxs, file_lengths) if (fl >= lb and fl <= ub)]
-
-        # break early if we dont want to process the full dataframe 
-        if not process_full_df:
-            if len(idxs) < batch_size / 2 and count > 6: break
-        elif show_progress and count % 10 == 0:
-            print('Examples Left: {}'.format(len(tmpdf)))
-        
-        # shuffle & get batch
-        random.shuffle(idxs)
-        idxs = idxs[:batch_size] if len(idxs) > batch_size else idxs
-        batchdf = tmpdf.loc[idxs]
-        
-        # remove selected batch rows from main df
-        tmpdf = tmpdf[~tmpdf.index.isin(batchdf.index)]
-        
-        # open, clean, index txt files 
-        results = prepare_df(batchdf, base)
-        results = sorted(results, key=lambda e: len(e[0].split(' ')), reverse=True)
-        sents, targets = [e[0] for e in results], [e[1] for e in results]
-        
-        yield sents, torch.tensor(targets, dtype=torch.float32, device=device).squeeze()
-
-def test_model(model, batch_size):
-    testdf = pd.read_csv('test.csv')
-    total_correct = 0
-    total_examples = 0
-    with torch.no_grad():
-        model.eval()
-        for sentences, targets in batch_iter(testdf, batch_size, process_full_df=True, show_progress=True):
-            y_pred = model(sentences)
-            n_correct = accuracy(y_pred, targets)
-
-            total_correct += n_correct
-            total_examples += batch_size
-    print('Accuracy: %.4f' % (total_correct / total_examples))
-
 def accuracy(preds, targets, threshold=torch.tensor([0.5], device=device)):
-    preds = (preds >= threshold).float()
-    n_correct = torch.eq(preds, targets).sum().item()
+    y = torch.nn.functional.one_hot(targets, 2)
+    y_preds = torch.softmax(preds, -1).squeeze()
+    y_preds = (y_preds >= threshold).long()
+    n_correct = torch.eq(y_preds, y).sum().item()
     return n_correct
 
 def load(path, cpu=False, load_model=True):
@@ -148,9 +100,8 @@ def load(path, cpu=False, load_model=True):
         tokenizer = tokenization.FullTokenizer(vocab_file=vocab_file, do_lower_case=True)
 
         model = BERTClassificationWrapper(device,
-                            tokenizer,
-                            number_classes=1,
-                            max_seq_len=max_sentence_len,
+                            len(tokenizer.vocab),
+                            number_classes=2,
                             hidden=hidden_size,
                             n_layers=n_layers,
                             attn_heads=n_heads,
@@ -197,10 +148,18 @@ def qtest(args):
     args['--log-every'] = '2'
     args['--validate-every'] = '1'
     args['--n-valid'] = '8'
+    args['--max-epoch'] = '1'
     
     args['--save-to'] = 'quick_test_model'
+    args['--dset-size'] = '20'
 
-    train(args)
+    arg_flags = ['--QQP', '--IMDB', '--QNLI', '--RTE', '--COLA']
+    for a in arg_flags:
+        # reset
+        for arg in arg_flags: args[arg] = False
+        args[a] = True
+        train(args)
+        print("Test passed for {}".format(a))
 
 
 def train(args):
@@ -217,30 +176,15 @@ def train(args):
     n_layers =          int(args['--n-layers'])
     dropout =           float(args['--dropout'])
 
-    assert train_batch_size <= n_valid, "Batch Size must be > Number of Validations"
+    assert train_batch_size <= n_valid, "Batch Size must be > Number of Validations"    
 
-    train_df = pd.read_csv('train.csv')
-    test_df = pd.read_csv('test.csv')
-    size = int(args['--dset-size'])
-    if size:
-        train_df = train_df.sample(frac=1.)
-        test_df = test_df.sample(frac=1.)
-        train_df = train_df[:size]
-        test_df = test_df[:size]
-    # train on longer lengths 
-    # train_df = train_df[train_df.file_length > 200]
-    # test_df = test_df[test_df.file_length > 200]
-    # train_df = train_df[train_df.file_length < max_sentence_len]
-    # test_df = test_df[test_df.file_length < max_sentence_len]
-    print("Length of (Train, Test) : ({}, {})".format(len(train_df), len(test_df)))
-
+    
+    # LOAD / INIT MODEL
     if args['--load']:
         model, optimizer, lang, metrics = load(args['--load-from'])
         model = model.to(device)
         print('model loaded...')
     else: 
-        # lang = load_model()
-        # lang = lang.top_n_words_model(n_words, glove=True)
         vocab_file = './uncased_L-12_H-768_A-12/vocab.txt'
         tokenizer = tokenization.FullTokenizer(vocab_file=vocab_file, do_lower_case=True)
 
@@ -248,58 +192,35 @@ def train(args):
         embed_size = int(args['--embed-size'])
 
         model = BERTClassificationWrapper(device,
-                                tokenizer,
-                                number_classes=1,
-                                max_seq_len=max_sentence_len,
+                                len(tokenizer.vocab),
+                                number_classes=2,
                                 hidden=hidden_size,
                                 n_layers=n_layers,
                                 attn_heads=n_heads,
                                 dropout=dropout,
                                 attention_dropout=args['--attention-dropout'])
 
-        # model = TaskSpecificAttention(lang, 
-        #                               device,
-        #                               embed_size, 
-        #                               hidden_size, 
-        #                               max_sentence_len, 
-        #                               lang.n_words, 
-        #                               n_heads, 
-        #                               n_layers, 
-        #                               float(args['--dropout']), 
-        #                               1)
-        # model = TransformerClassifier(language=lang, device=device,
-        #                               embed_dim=embed_size, 
-        #                               hidden_dim=hidden_size,
-        #                               num_embed=lang.n_words,
-        #                               num_pos=max_sentence_len, 
-        #                               num_heads=n_heads,
-        #                               num_layers=n_layers,
-        #                               dropout=float(args['--dropout']),
-        #                               n_classes=1)
-        # model = RNN_Self_Attention_Classifier(language=lang, device=device,
-        #                               batch_size=train_batch_size,
-        #                               embed_dim=embed_size, 
-        #                               hidden_dim=hidden_size,
-        #                               num_embed=lang.n_words,
-        #                               n_classes=1)
         # init weights 
         for p in model.parameters():
             assert p.requires_grad == True
             if p.dim() > 1:
                 nn.init.xavier_uniform_(p)
-        # print('model param check')
 
         model = model.to(device)
         optimizer = torch.optim.Adam(model.parameters(), lr=float(args['--lr']))
 
-    print("Model Stats:")
-    print("# of parameters: {}".format(sum([p.numel() for p in model.parameters()])))
-    print("# of trainable parameters: {}".format(sum([p.numel() for p in model.parameters() if p.requires_grad])))
+    dataloader = load_dataloader(args, tokenizer)
 
-    loss_fcn = nn.BCELoss()
+
+    n_params = sum([p.numel() for p in model.parameters()])
+    n_train_params = sum([p.numel() for p in model.parameters() if p.requires_grad])
+    print("Model Stats:")
+    print("# of parameters: {}".format(n_params))
+    print("# of trainable parameters: {}".format(n_train_params))
 
     # metric tracking 
     loss_m = []
+    time_tracker = []
     accuracy_m = []
     train_itrs = []
     epoch_track = []
@@ -308,8 +229,22 @@ def train(args):
     absolute_start_time = time.time()
     absolute_train_time = 0
     decrease_dropout_waiter = int(args['--start-decrease'])
+    w_start = []
+    if args['--attention-dropout']:
+        for t in model.bert.transformer_blocks:
+            w1 = t.input_sublayer.dropout_attention.layer_embedding
+            w2 = t.output_sublayer.dropout_attention.layer_embedding
+            w_start.append([w1, w2])
 
     def get_metrics():
+        # extract layer attention vectors
+        w_end = []
+        if args['--attention-dropout']:
+            for t in model.bert.transformer_blocks:
+                w1 = t.input_sublayer.dropout_attention.layer_embedding
+                w2 = t.output_sublayer.dropout_attention.layer_embedding
+                w_end.append([w1, w2])
+
         return {'train_loss':loss_m,
                 'train_acc': accuracy_m,
                 'train_iterations': train_itrs,
@@ -318,8 +253,14 @@ def train(args):
                 'val_acc': val_accuracy_m,
                 'total_time': round(time.time() - absolute_start_time, 4),
                 'train_time': round(absolute_train_time, 4),
+                'seconds_spent_training': time_tracker,
+                'n_params': n_params,
+                'n_train_params': n_train_params,
+                'weigth_start': w_start,
+                'weight_end': w_end,
                 'args': args}
 
+    loss_fcn = nn.CrossEntropyLoss()
     try:
         model.train()
         for e in range(epochs):
@@ -327,20 +268,20 @@ def train(args):
             total_correct = total_examples = 0
             begin_time = time.time()
             
-            for sents, targets in batch_iter(train_df, train_batch_size, process_full_df=True, shuffle=True):
+            for x, y, lengths in dataloader.batch_iter(train_batch_size, train=True, process_full_df=True, shuffle=True):
                 torch.cuda.empty_cache()
                 start_train_time = time.time()
                 train_iter += 1 
                 decrease_dropout_waiter -= 1
                 optimizer.zero_grad()
                 
-                preds = model(sents)
-                
-                loss = loss_fcn(preds, targets)
+                # fix that sents is a tensor X which has been tokenified
+                y_hat = model(x, lengths)
+                loss = loss_fcn(y_hat, y)
                 epoch_loss += loss.item()
                 
                 # accuracy check 
-                n_correct = accuracy(preds, targets)
+                n_correct = accuracy(y_hat, y)
                 total_correct += n_correct
                 total_examples += train_batch_size
             
@@ -356,38 +297,38 @@ def train(args):
                     n_examples = n_correct = b_val_loss = 0
 
                     with torch.no_grad():
-                        for val_sents, val_targets in batch_iter(test_df, train_batch_size, shuffle=True, process_full_df=True):
-                            val_preds = model(val_sents)
-                            batch_n_correct = accuracy(val_preds, val_targets)
-                            vloss = loss_fcn(val_preds, val_targets)
+                        for x, y, lengths in dataloader.batch_iter(train_batch_size, train=False, shuffle=True, process_full_df=True):
+                            y_hat = model(x, lengths)
+                            bcorrect = accuracy(y_hat, y)
+                            bloss = loss_fcn(y_hat, y)
 
-                            b_val_loss += vloss.item()
-                            n_correct += batch_n_correct
+                            b_val_loss += bloss.item()
+                            n_correct += bcorrect
                             n_examples += train_batch_size
 
                             if n_examples > int(args['--n-valid']): break
+                    
+                    assert n_examples > 0, "Validation Warning: No Examples Recorded"
 
-                    if n_examples:
-                        val_acc = n_correct / n_examples
-                        val_loss = b_val_loss / n_examples
+                    val_acc = n_correct / n_examples
+                    val_loss = b_val_loss / n_examples
 
-                        is_better = len(val_accuracy_m) == 0 or val_acc > max(val_accuracy_m)
-                        val_loss_m.append(round(val_loss / n_examples, 5))
-                        val_accuracy_m.append(val_acc)
+                    is_better = len(val_accuracy_m) == 0 or val_acc > max(val_accuracy_m)
+                    val_loss_m.append(round(val_loss, 5))
+                    val_accuracy_m.append(round(val_acc, 5))
 
-                        if is_better: 
-                            if args['--save']:
-                                print('save currently the best model to [%s]' % model_save_path, file=sys.stderr)
-                                save(model_save_path, get_metrics(), model, optimizer)
-                            else:
-                                print("Saving not enabeled...")
-                    else:
-                        print("Warning: division by zero in validation avoided", file=sys.stderr)
+                    if is_better: 
+                        if args['--save']:
+                            print('save currently the best model to [%s]' % model_save_path, file=sys.stderr)
+                            save(model_save_path, get_metrics(), model, optimizer)
+                        else:
+                            print("Saving not enabeled...")
 
                     model.train()
                 
                 # track + log results 
                 if train_iter % int(args['--log-every']) == 0:
+                    time_tracker.append(round(absolute_start_time - time.time(), 4))
                     loss_m.append(round(epoch_loss / train_iter, 4))
                     accuracy_m.append(total_correct / total_examples)
                     train_itrs.append(train_iter)
@@ -421,6 +362,40 @@ def train(args):
             prefix = 'cancel_e={}_itr={}'.format(e, train_iter) if e != (epochs-1) else 'complete_'
             save(prefix + model_save_path, metrics, model, optimizer)
 
+def load_dataloader(args, tokenizer):
+    # Load dataloader 
+    loader = None 
+    if args['--IMDB']:
+        loader = IMDBLoader
+    elif args['--QQP']:
+        loader = QQPLoader
+    elif args['--QNLI']:
+        loader = QNLILoader
+    elif args['--RTE']:
+        loader = RTELoader
+    elif args['--COLA']:
+        loader = COLALoader
+    else:
+        raise RuntimeError("No Dataloader Specified.")
+    loader = loader(max_len=int(args['--max-sent-len']),
+                    size=int(args['--dset-size']),
+                    device=device, 
+                    tokenizer=tokenizer)
+    return loader
+
+def test_model(model, dataloader, batch_size):
+    total_correct = 0
+    total_examples = 0
+    with torch.no_grad():
+        model.eval()
+        for sentences, targets in dataloader.batch_iter(batch_size, train=False, process_full_df=True, show_progress=True):
+            y_pred = model(sentences)
+            n_correct = accuracy(y_pred, targets)
+
+            total_correct += n_correct
+            total_examples += batch_size
+    print('Accuracy: %.4f' % (total_correct / total_examples))
+
 def main(): 
     args = docopt(__doc__)
     
@@ -433,9 +408,15 @@ def main():
         qtest(args)
     elif args['--test']:
         assert args['--load'], 'Must load a model for testing...'
+        # model
         model, _, _, _ = load(args['--load-from'])
         model = model.to(device)
-        test_model(model, int(args['--batch-size']))
+        # dataloader
+        vocab_file = './uncased_L-12_H-768_A-12/vocab.txt'
+        tokenizer = tokenization.FullTokenizer(vocab_file=vocab_file, do_lower_case=True)
+        dataloader = load_dataloader(args, tokenizer)
+        # evaluate
+        test_model(model, dataloader, int(args['--batch-size']))
     else: 
         train(args)
 
