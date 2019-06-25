@@ -66,15 +66,12 @@ from dataloader import *
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-def accuracy(preds, targets, threshold=torch.tensor([0.5], device=device)):
-    y_preds = torch.softmax(preds, -1).squeeze()
+def accuracy(preds, y, threshold=torch.tensor([0.5], device=device)):
+    y_preds = torch.softmax(preds, -1)
     y_preds = (y_preds >= threshold).long()
-    n_correct = 0
-    for y_pred, y_true in zip(y_preds.split(1), targets.split(1)):
-        y_pred = y_pred.squeeze().nonzero().squeeze().detach().cpu().numpy()
-        y_true = y_true.detach().cpu().numpy()
-        n_correct += 1 if y_pred == y_true else 0
-    return n_correct
+    y = y.cpu().numpy()
+    n_correct = (y_preds[np.arange(len(y)), y] == 1).sum()
+    return n_correct.cpu().numpy()
 
 def load(path, cpu=False, load_model=True):
     model_dir = 'model_saves/' + path
@@ -159,7 +156,6 @@ def qtest(args):
         args[a] = True
         train(args)
         print("Test passed for {}".format(a))
-
 
 def train(args):
     torch.autograd.set_detect_anomaly(True)
@@ -265,7 +261,7 @@ def train(args):
         model.train()
         print('Training...')
         for e in range(epochs):
-            epoch_loss = train_iter = val_acc = val_loss = 0
+            epoch_loss = train_iter = val_loss = 0
             total_correct = total_examples = 0
             begin_time = time.time()
             
@@ -295,7 +291,7 @@ def train(args):
                 # perform validation
                 if train_iter % valid_niter == 0 and train_iter > 0:
                     model.eval()
-                    n_examples = n_correct = b_val_loss = 0
+                    n_correct = n_examples = val_loss = 0
 
                     with torch.no_grad():
                         for x, y, lengths in dataloader.batch_iter(train_batch_size, train=False, shuffle=True, process_full_df=True):
@@ -303,22 +299,22 @@ def train(args):
                             bcorrect = accuracy(y_hat, y)
                             bloss = loss_fcn(y_hat, y)
 
-                            b_val_loss += bloss.item()
+                            val_loss += bloss.item()
                             n_correct += bcorrect
                             n_examples += train_batch_size
 
                             if n_examples > int(args['--n-valid']): break
                     
                     assert n_examples > 0, "Validation Warning: No Examples Recorded"
-
+                    
                     val_acc = n_correct / n_examples
-                    val_loss = b_val_loss / n_examples
-
+                    val_loss = val_loss / n_examples
+    
                     is_better = len(val_accuracy_m) == 0 or val_acc > max(val_accuracy_m)
-                    val_loss_m.append(round(val_loss, 5))
                     val_accuracy_m.append(round(val_acc, 5))
+                    val_loss_m.append(round(val_loss, 5))
                     val_iters.append(train_iter)
-
+                    
                     if is_better: 
                         if args['--save']:
                             print('save currently the best model to [%s]' % model_save_path, file=sys.stderr)
@@ -335,10 +331,10 @@ def train(args):
                     accuracy_m.append(total_correct / total_examples)
                     train_itrs.append(train_iter)
                     epoch_track.append(e)
-                    total_correct = total_examples = 0
+                    epoch_loss = total_correct = total_examples = 0
 
                     print(('epoch %d, train itr %d, avg. loss %.2f, '
-                            'train accuracy: %.2f, val loss %.2f, val acc %.2f '
+                            'train accuracy: %.2f, avg. val loss %.2f, val acc %.2f '
                             'time elapsed %.2f sec') % (e, train_iter,
                             loss_m[-1], accuracy_m[-1],
                             val_loss_m[-1], val_accuracy_m[-1],
