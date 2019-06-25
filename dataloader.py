@@ -94,7 +94,10 @@ class TwoSentenceLoader(BatchLoader):
                            df[self.s2_name].values,\
                            df[self.target_name].values):
             # clean
-            q = normalizeString(q, stopwords=True, contractions=True)
+            try:
+                q = normalizeString(q, stopwords=True, contractions=True)
+            except:
+                print(q)
             s = normalizeString(s, stopwords=True, contractions=True)
             # tokenize
             q_tokens = self.tokenizer.tokenize(q)

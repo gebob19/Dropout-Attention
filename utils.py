@@ -118,7 +118,7 @@ def compare_metrics(metrics, first_n=100):
         for m in metrics:
             for key in ['val_acc', 'train_acc', 'val_loss', 'train_loss']:
                 m[key] = m[key][:first_n]
-        names = [m['args']['--save-to'] for m in metrics]    
+    names = [m['args']['--save-to'] for m in metrics]    
 
     for m in metrics:
         print('--------{}----------'.format(m['args']['--save-to']))
