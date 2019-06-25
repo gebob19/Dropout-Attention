@@ -7,7 +7,7 @@ python train.py \
 --n-heads=3 \
 --n-layers=6 \
 --batch-size=16 \
---max-epoch=2 \
+--max-epoch=1 \
 --max-sent-len=512 \
 --log-every=10 \
 --validate-every=10 \
@@ -24,7 +24,7 @@ python train.py \
 --n-heads=3 \
 --n-layers=6 \
 --batch-size=16 \
---max-epoch=2 \
+--max-epoch=1 \
 --max-sent-len=512 \
 --log-every=10 \
 --validate-every=10 \
@@ -44,7 +44,7 @@ python train.py \
 --n-heads=3 \
 --n-layers=6 \
 --batch-size=16 \
---max-epoch=2 \
+--max-epoch=1 \
 --max-sent-len=512 \
 --log-every=10 \
 --validate-every=10 \
@@ -54,6 +54,7 @@ python train.py \
 --dset-size=5000 \
 --save \
 --save-to=COLA-VD-5K-june25-1200 
+
 ## Attention Dropout 
 python train.py \
 --COLA \
@@ -61,7 +62,7 @@ python train.py \
 --n-heads=3 \
 --n-layers=6 \
 --batch-size=16 \
---max-epoch=2 \
+--max-epoch=1 \
 --max-sent-len=512 \
 --log-every=10 \
 --validate-every=10 \
@@ -81,7 +82,7 @@ python train.py \
 --n-heads=3 \
 --n-layers=6 \
 --batch-size=16 \
---max-epoch=2 \
+--max-epoch=1 \
 --max-sent-len=512 \
 --log-every=10 \
 --validate-every=10 \
@@ -98,7 +99,7 @@ python train.py \
 --n-heads=3 \
 --n-layers=6 \
 --batch-size=16 \
---max-epoch=2 \
+--max-epoch=1 \
 --max-sent-len=512 \
 --log-every=10 \
 --validate-every=10 \
@@ -118,7 +119,7 @@ python train.py \
 --n-heads=3 \
 --n-layers=6 \
 --batch-size=16 \
---max-epoch=2 \
+--max-epoch=1 \
 --max-sent-len=512 \
 --log-every=10 \
 --validate-every=10 \
@@ -135,7 +136,7 @@ python train.py \
 --n-heads=3 \
 --n-layers=6 \
 --batch-size=16 \
---max-epoch=2 \
+--max-epoch=1 \
 --max-sent-len=512 \
 --log-every=10 \
 --validate-every=10 \
@@ -155,7 +156,7 @@ python train.py \
 --n-heads=3 \
 --n-layers=6 \
 --batch-size=16 \
---max-epoch=2 \
+--max-epoch=1 \
 --max-sent-len=512 \
 --log-every=10 \
 --validate-every=10 \
@@ -171,7 +172,7 @@ python train.py \
 --n-heads=3 \
 --n-layers=6 \
 --batch-size=16 \
---max-epoch=2 \
+--max-epoch=1 \
 --max-sent-len=512 \
 --log-every=10 \
 --validate-every=10 \
