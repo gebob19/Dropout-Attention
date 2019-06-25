@@ -131,7 +131,6 @@ def save(model_save_path, metrics, model, optimizer):
 
     print('Model saved.')
 
-
 def qtest(args):
     args['--batch-size'] = '2'
     args['--hidden-size'] = '10'
@@ -172,7 +171,6 @@ def train(args):
     dropout =           float(args['--dropout'])
 
     assert train_batch_size <= n_valid, "Batch Size must be > Number of Validations"    
-
     
     # LOAD / INIT MODEL
     if args['--load']:
@@ -204,7 +202,6 @@ def train(args):
         optimizer = torch.optim.Adam(model.parameters(), lr=float(args['--lr']))
 
     dataloader = load_dataloader(args, tokenizer)
-
 
     n_params = sum([p.numel() for p in model.parameters()])
     n_train_params = sum([p.numel() for p in model.parameters() if p.requires_grad])

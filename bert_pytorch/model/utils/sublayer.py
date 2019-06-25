@@ -21,6 +21,7 @@ class SublayerConnection(nn.Module):
         "Apply residual connection to any sublayer with the same size."
         h = sublayer(x)
         # apply dropout of choice
+        print(h.shape)
         if self.attention_dropout:
             h = self.dropout_attention(h, lengths)
         else:
@@ -52,8 +53,7 @@ class DropoutAttention(nn.Module):
             w = torch.bmm(q, k).squeeze(-1)
 
             # n is the # words to ignore 
-            n = int(w.size(-1) * self.dropout)
-            n = n if n != 0 else 1
+            n = max(int(w.size(-1) * self.dropout), 1)
 
             # inverse probability hack for multinomial sampling
             mx, _ = torch.max(w, -1)
@@ -71,9 +71,9 @@ class DropoutAttention(nn.Module):
             #     bm[i, length:, :] = 0.
 
             w = byte_mask.to(self.device).unsqueeze(-1)
-
             w = w.transpose(0, 1)
+
+            # inverse dropout training
+            return (v * (1. / (1. - self.dropout))) * w
         else:
-            # average output of layer when test time (ref to original paper impl.)
-            w = self.dropout 
-        return v * w
+            return v
