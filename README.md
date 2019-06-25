@@ -3,8 +3,6 @@ Brennan Gebotys
 
 # Introduction
 
-This project investigates a new use of Natural Language Processing (NLP) Attention, which to the best of my knowledge is first of its kind. 
-
 ## Self-Attention
 
 The Transformer [2] has led to significant advances in NLP tasks.
@@ -22,6 +20,9 @@ A disadvantage of Vanilla Dropout is that units are randomly dropped. When train
 We will show that the purposed mechanism improves interpretability, time to train, training larger models, and acts as a valid regularization technique. The mechanism is easy to implement, requires a small amount of extra trainable parameters, and shows significant improvements on the tested dataset. 
 
 # Algorithm
+
+<img src="images/Diagram.png" width="500">
+
 
 Assume the input is of a single batch of size (*sequence_length*, *hidden*). Each vector across the sequence length will be referred to as a word-vector. The algorithm would act the same with batch sizes greater than one.
 
@@ -98,4 +99,11 @@ The general idea of the technique is very easy to implement and can be applied a
 
 [2] Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob Uszkoreit, Llion Jones, Aidan N Gomez, Lukasz Kaiser, and Illia Polosukhin. 2017. Attention is all you need. In Advances in Neural Information Processing Systems, pages 6000–6010.
 
-[3] Srivastava, Nitish, et al. "Dropout: a simple way to prevent neural networks from overfitting." The Journal of Machine Learning Research 15.1 (2014): 1929-1958.
+[3] Nitish Srivastava, Geoffrey Hinton, Alex Krizhevsky, Ilya Sutskever, and Ruslan Salakhutdinov.
+Dropout: A simple way to prevent neural networks from overfitting. The Journal of Machine
+Learning Research, 15(1):1929–1958, 2014.
+
+[4] Adam Paszke, Sam Gross, Soumith Chintala, Gregory Chanan, Edward Yang, Zachary DeVito,
+Zeming Lin, Alban Desmaison, Luca Antiga, and Adam Lerer. Automatic differentiation in
+pytorch. 2017.
+
