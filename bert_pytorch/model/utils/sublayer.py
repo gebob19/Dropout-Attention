@@ -21,7 +21,6 @@ class SublayerConnection(nn.Module):
         "Apply residual connection to any sublayer with the same size."
         h = sublayer(x)
         # apply dropout of choice
-        print(h.shape)
         if self.attention_dropout:
             h = self.dropout_attention(h, lengths)
         else:
