@@ -220,6 +220,7 @@ def train(args):
     val_accuracy_m = [0]
     absolute_start_time = time.time()
     absolute_train_time = 0
+    total_iters = 0
     decrease_dropout_waiter = int(args['--start-decrease'])
     w_start = []
     if args['--attention-dropout']:
@@ -266,6 +267,7 @@ def train(args):
                 torch.cuda.empty_cache()
                 start_train_time = time.time()
                 train_iter += 1 
+                total_iters += 1
                 decrease_dropout_waiter -= 1
                 optimizer.zero_grad()
                 
@@ -310,7 +312,7 @@ def train(args):
                     is_better = len(val_accuracy_m) == 0 or val_acc > max(val_accuracy_m)
                     val_accuracy_m.append(round(val_acc, 5))
                     val_loss_m.append(round(val_loss, 5))
-                    val_iters.append(train_iter)
+                    val_iters.append(total_iters)
                     
                     if is_better: 
                         if args['--save']:
@@ -326,7 +328,7 @@ def train(args):
                     time_tracker.append(round(absolute_start_time - time.time(), 4))
                     loss_m.append(round(epoch_loss / train_iter, 4))
                     accuracy_m.append(total_correct / total_examples)
-                    train_itrs.append(train_iter)
+                    train_itrs.append(total_iters)
                     epoch_track.append(e)
                     epoch_loss = total_correct = total_examples = 0
 
