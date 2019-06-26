@@ -5,8 +5,8 @@ n_heads="12"
 n_layers="12"
 ## Training Params
 batch_size="32"
-epochs="3"
-id="JUNE25-10K-6LAYER"
+epochs="2"
+id="JUNE25-10K-12LAYER"
 dset_size="10000"
 
 # RTE
