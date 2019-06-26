@@ -80,8 +80,8 @@ def load(path, cpu=False, load_model=True):
 
     if load_model:
         if cpu:
-            model_checkpoint = torch.load(model_dir + '/model.bin', map_location=lambda storage, loc: storage)
-            optim_checkpoint =  torch.load(model_dir + '/optimizer.pt', map_location=lambda storage, loc: storage)
+            model_checkpoint = torch.load(model_dir + '/model.bin', map_location='cpu')
+            optim_checkpoint =  torch.load(model_dir + '/optimizer.pt', map_location='cpu')
         else:
             model_checkpoint = torch.load(model_dir + '/model.bin')
             optim_checkpoint =  torch.load(model_dir + '/optimizer.pt')
@@ -353,8 +353,8 @@ def train(args):
     finally:
         if args['--save']:
             metrics = get_metrics()
-            pp = pprint.PrettyPrinter(indent=4)
-            pp.pprint(metrics)
+            # pp = pprint.PrettyPrinter(indent=4)
+            # pp.pprint(metrics)
 
             prefix = 'cancel_e={}_itr={}'.format(e, train_iter) if e != (epochs-1) else 'complete_'
             save(prefix + model_save_path, metrics, model, optimizer)
