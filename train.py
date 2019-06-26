@@ -76,14 +76,17 @@ def accuracy(preds, y, threshold=torch.tensor([0.5], device=device)):
 def load(path, cpu=False, load_model=True):
     model_dir = 'model_saves/' + path
     # lang = model_checkpoint['vocab']
+    if cpu:
+        metrics = torch.load(model_dir + '/metrics.pt', map_location='cpu')
+    else:
+        metrics = torch.load(model_dir + '/metrics.pt')
 
     if load_model:
         if cpu:
-            metrics = torch.load(model_dir + '/metrics.pt', map_location='cpu')
+            
             model_checkpoint = torch.load(model_dir + '/model.bin', map_location='cpu')
             optim_checkpoint =  torch.load(model_dir + '/optimizer.pt', map_location='cpu')
         else:
-            metrics = torch.load(model_dir + '/metrics.pt')
             model_checkpoint = torch.load(model_dir + '/model.bin')
             optim_checkpoint =  torch.load(model_dir + '/optimizer.pt')
 
