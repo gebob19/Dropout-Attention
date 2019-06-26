@@ -1,13 +1,13 @@
 # VAR SETUP
 ## Model Arch.
 hidden_size="384"
-n_heads="3"
-n_layers="3"
+n_heads="6"
+n_layers="6"
 ## Training Params
 batch_size="32"
 epochs="3"
-id="JUNE25-5K"
-dset_size="5000"
+id="JUNE25-10K-6LAYER"
+dset_size="10000"
 
 # RTE
 ## Vanilla Dropout 
