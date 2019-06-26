@@ -1,8 +1,8 @@
 # VAR SETUP
 ## Model Arch.
 hidden_size="384"
-n_heads="6"
-n_layers="6"
+n_heads="12"
+n_layers="12"
 ## Training Params
 batch_size="32"
 epochs="3"
