@@ -72,7 +72,7 @@ class BatchLoader:
             
             # tokenize and tensorize
             x, lengths = self.tokenize(sents)
-            y = torch.tensor(targets, device=self.device)
+            y = torch.tensor(targets, device=self.device).long()
         
             yield x, y, lengths
         
