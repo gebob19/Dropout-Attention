@@ -258,6 +258,7 @@ def train(args):
                 'weight_end': w_end,
                 'args': args}
 
+
     loss_fcn = nn.CrossEntropyLoss()
     try:
         model.train()
@@ -268,6 +269,7 @@ def train(args):
             begin_time = time.time()
             
             for x, y, lengths, idxs in dataloader.batch_iter(train_batch_size, train=True, process_full_df=True, shuffle=True):
+                test=False
                 torch.cuda.empty_cache()
                 start_train_time = time.time()
                 train_iter += 1 
@@ -297,7 +299,8 @@ def train(args):
                     n_correct = n_examples = val_loss = 0
 
                     with torch.no_grad():
-                        for x, y, lengths in dataloader.batch_iter(train_batch_size, train=False, shuffle=True, process_full_df=True):
+                        test=True
+                        for x, y, lengths, idxs in dataloader.batch_iter(train_batch_size, train=False, shuffle=True, process_full_df=True):
                             y_hat = model(x, lengths)
                             bcorrect = accuracy(y_hat, y)
                             bloss = loss_fcn(y_hat, y)
@@ -355,7 +358,7 @@ def train(args):
                 #             print('Decreased dropout to {}...'.format(dropout))
 
     finally:
-        print(idxs)
+        print(idxs, test)
         if args['--save']:
             metrics = get_metrics()
             # pp = pprint.PrettyPrinter(indent=4)
