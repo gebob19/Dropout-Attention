@@ -118,7 +118,7 @@ dset_size="10000"
 # --save-to=QNLI-AD-$id
 python train.py \
 --QNLI \
---hidden-size=768 \
+--hidden-size=20 \
 --n-heads=1 \
 --n-layers=1 \
 --batch-size=32 \
