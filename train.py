@@ -267,7 +267,7 @@ def train(args):
             total_correct = total_examples = 0
             begin_time = time.time()
             
-            for x, y, lengths in dataloader.batch_iter(train_batch_size, train=True, process_full_df=True, shuffle=True):
+            for x, y, lengths in dataloader.batch_iter(train_batch_size, train=False, process_full_df=True, shuffle=True):
                 torch.cuda.empty_cache()
                 start_train_time = time.time()
                 train_iter += 1 
