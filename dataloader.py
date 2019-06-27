@@ -21,10 +21,22 @@ class BatchLoader:
         self.tokenizer = tokenizer
         
         if self.size:
-            self.traindf = self.traindf.sample(frac=1.)
-            self.testdf = self.testdf.sample(frac=1.)
-            self.traindf = self.traindf[:self.size]
-            self.testdf = self.testdf[:self.size]
+            try:
+                self.traindf = pd.read_csv(base/'train_{}.csv'.format(size))
+                self.testdf = pd.read_csv(base/'test_{}.csv'.format(size))
+                print('Loaded subset dataset...')
+            except:
+                self.traindf = self.traindf.sample(frac=1.)
+                self.testdf = self.testdf.sample(frac=1.)
+                self.traindf = self.traindf[:self.size]
+                self.testdf = self.testdf[:self.size]
+                
+                # save for consistent tests
+                self.traindf.to_csv(base/'train_{}.csv'.format(size))
+                self.testdf.to_csv(base/'test_{}.csv'.format(size))
+                print('Created subset dataset...')
+
+
         print("Length of (Train, Test) : ({}, {})".format(len(self.traindf), len(self.testdf)))
     
     def prepare(self, df):
