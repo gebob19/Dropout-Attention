@@ -93,7 +93,7 @@ python train.py \
 --log-every=10 \
 --validate-every=100 \
 --n-valid=5000 \
---dset-size=20000
+--dset-size=20000 \
 --dropout=0.4 \
 --lr=3e-5 \
 --save \
@@ -110,7 +110,7 @@ python train.py \
 --log-every=10 \
 --validate-every=100 \
 --n-valid=5000 \
---dset-size=20000
+--dset-size=20000 \
 --dropout=0.4 \
 --lr=3e-5 \
 --save \
