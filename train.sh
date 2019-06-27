@@ -16,7 +16,7 @@ python train.py \
 --hidden-size=$hidden_size \
 --n-heads=12 \
 --n-layers=12 \
---batch-size=$batch_size \
+--batch-size=8 \
 --max-epoch=1 \
 --max-sent-len=512 \
 --log-every=10 \
@@ -32,7 +32,7 @@ python train.py \
 --hidden-size=$hidden_size \
 --n-heads=12 \
 --n-layers=12 \
---batch-size=$batch_size \
+--batch-size=8 \
 --max-epoch=1 \
 --max-sent-len=512 \
 --log-every=10 \
@@ -44,41 +44,41 @@ python train.py \
 --attention-dropout \
 --save-to=IMDB-AD-$id 
 
-# # COLA
-## Vanilla Dropout 
-python train.py \
---COLA \
---hidden-size=768 \
---n-heads=$n_heads \
---n-layers=$n_layers \
---batch-size=$batch_size \
---max-epoch=5 \
---max-sent-len=512 \
---log-every=20 \
---validate-every=50 \
---n-valid=1000 \
---dropout=0.5 \
---lr=3e-5 \
---save \
---save-to=COLA-VD-$id 
+# # # COLA
+# ## Vanilla Dropout 
+# python train.py \
+# --COLA \
+# --hidden-size=768 \
+# --n-heads=$n_heads \
+# --n-layers=$n_layers \
+# --batch-size=$batch_size \
+# --max-epoch=5 \
+# --max-sent-len=512 \
+# --log-every=20 \
+# --validate-every=50 \
+# --n-valid=1000 \
+# --dropout=0.5 \
+# --lr=3e-5 \
+# --save \
+# --save-to=COLA-VD-$id 
 
-## Attention Dropout 
-python train.py \
---COLA \
---hidden-size=768 \
---n-heads=$n_heads \
---n-layers=$n_layers \
---batch-size=$batch_size \
---max-epoch=5 \
---max-sent-len=512 \
---log-every=20 \
---validate-every=50 \
---n-valid=1000 \
---dropout=0.5 \
---lr=3e-5 \
---save \
---attention-dropout \
---save-to=COLA-AD-$id
+# ## Attention Dropout 
+# python train.py \
+# --COLA \
+# --hidden-size=768 \
+# --n-heads=$n_heads \
+# --n-layers=$n_layers \
+# --batch-size=$batch_size \
+# --max-epoch=5 \
+# --max-sent-len=512 \
+# --log-every=20 \
+# --validate-every=50 \
+# --n-valid=1000 \
+# --dropout=0.5 \
+# --lr=3e-5 \
+# --save \
+# --attention-dropout \
+# --save-to=COLA-AD-$id
 
 # QNLI
 ## Vanilla Dropout 
