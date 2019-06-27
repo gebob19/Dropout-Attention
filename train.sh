@@ -98,37 +98,22 @@ dset_size="10000"
 # --dset-size=50000 \
 # --save \
 # --save-to=QNLI-VD-$id 
-## Attention Dropout 
-# python train.py \
-# --QNLI \
-# --hidden-size=768 \
-# --n-heads=$n_heads \
-# --n-layers=$n_layers \
-# --batch-size=$batch_size \
-# --max-epoch=$epochs \
-# --max-sent-len=512 \
-# --log-every=10 \
-# --validate-every=100 \
-# --n-valid=5000 \
-# --dropout=0.5 \
-# --lr=3e-5 \
-# --dset-size=50000 \
-# --save \
-# --attention-dropout \
-# --save-to=QNLI-AD-$id
+# Attention Dropout 
 python train.py \
 --QNLI \
---hidden-size=20 \
---n-heads=1 \
---n-layers=1 \
---batch-size=32 \
---max-epoch=1 \
+--hidden-size=768 \
+--n-heads=$n_heads \
+--n-layers=$n_layers \
+--batch-size=$batch_size \
+--max-epoch=$epochs \
 --max-sent-len=512 \
 --log-every=10 \
---validate-every=100000000 \
+--validate-every=100 \
 --n-valid=5000 \
 --dropout=0.5 \
 --lr=3e-5 \
+--dset-size=50000 \
+--save \
 --attention-dropout \
 --save-to=QNLI-AD-$id
 
