@@ -85,15 +85,15 @@ dset_size="10000"
 python train.py \
 --QNLI \
 --hidden-size=$hidden_size \
---n-heads=12 \
---n-layers=12 \
+--n-heads=6 \
+--n-layers=6 \
 --batch-size=$batch_size \
---max-epoch=1 \
+--max-epoch=2 \
 --max-sent-len=512 \
 --log-every=10 \
 --validate-every=100 \
 --n-valid=5000 \
---dset-size=30000
+--dset-size=20000
 --dropout=0.4 \
 --lr=3e-5 \
 --save \
@@ -105,12 +105,12 @@ python train.py \
 --n-heads=6 \
 --n-layers=6 \
 --batch-size=$batch_size \
---max-epoch=1 \
+--max-epoch=2 \
 --max-sent-len=512 \
 --log-every=10 \
 --validate-every=100 \
 --n-valid=5000 \
---dset-size=30000
+--dset-size=20000
 --dropout=0.4 \
 --lr=3e-5 \
 --save \
