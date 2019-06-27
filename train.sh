@@ -127,8 +127,8 @@ python train.py \
 --max-epoch=1 \
 --max-sent-len=512 \
 --log-every=10 \
---validate-every=50 \
---n-valid=10000 \
+--validate-every=100 \
+--n-valid=6000 \
 --dropout=0.5 \
 --lr=3e-5 \
 --dset-size=30000 \
@@ -144,8 +144,8 @@ python train.py \
 --max-epoch=1 \
 --max-sent-len=512 \
 --log-every=10 \
---validate-every=50 \
---n-valid=10000 \
+--validate-every=100 \
+--n-valid=6000 \
 --dropout=0.5 \
 --lr=3e-5 \
 --dset-size=30000 \
@@ -164,8 +164,8 @@ python train.py \
 --max-epoch=1 \
 --max-sent-len=512 \
 --log-every=10 \
---validate-every=50 \
---n-valid=10000 \
+--validate-every=100 \
+--n-valid=6000 \
 --dropout=0.5 \
 --lr=3e-5 \
 --dset-size=30000 \
@@ -181,8 +181,8 @@ python train.py \
 --max-epoch=1 \
 --max-sent-len=512 \
 --log-every=10 \
---validate-every=50 \
---n-valid=10000 \
+--validate-every=100 \
+--n-valid=6000 \
 --dropout=0.5 \
 --lr=3e-5 \
 --dset-size=30000 \
