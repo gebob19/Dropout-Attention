@@ -355,6 +355,7 @@ def train(args):
                 #             print('Decreased dropout to {}...'.format(dropout))
 
     finally:
+        print(x, y, lengths)
         if args['--save']:
             metrics = get_metrics()
             # pp = pprint.PrettyPrinter(indent=4)
