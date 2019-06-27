@@ -58,7 +58,6 @@ class DropoutAttention(nn.Module):
             mx, _ = torch.max(w, -1)
             mx = mx.unsqueeze(-1)
             p_inv = F.softmax(mx - w, -1)
-            print(p_inv)
             attnmask = torch.multinomial(p_inv, n)
             
             # create restricted attention mask

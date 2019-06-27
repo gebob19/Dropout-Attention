@@ -101,10 +101,10 @@ dset_size="10000"
 # Attention Dropout 
 python train.py \
 --QNLI \
---hidden-size=768 \
+--hidden-size=20 \
 --n-heads=$n_heads \
 --n-layers=$n_layers \
---batch-size=$batch_size \
+--batch-size=64 \
 --max-epoch=$epochs \
 --max-sent-len=512 \
 --log-every=10 \

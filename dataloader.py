@@ -74,7 +74,7 @@ class BatchLoader:
             x, lengths = self.tokenize(sents)
             y = torch.tensor(targets, device=self.device).long()
         
-            yield x, y, lengths
+            yield x, y, lengths, idxs
         
 # TWO SENTENCE TASKS
 
