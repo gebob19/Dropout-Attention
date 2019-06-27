@@ -118,39 +118,39 @@ python train.py \
 --save-to=QNLI-AD-$id
 
 # QQP
-## Vanilla Dropout 
-python train.py \
---QQP \
---hidden-size=$hidden_size \
---n-heads=12 \
---n-layers=12 \
---batch-size=$batch_size \
---max-epoch=1 \
---max-sent-len=512 \
---log-every=10 \
---validate-every=50 \
---n-valid=2000 \
---dropout=0.3 \
---lr=3e-5 \
---dset-size=20000 \
---save \
---save-to=QQP-VD-$id 
-## Attention Dropout 
-python train.py \
---QQP \
---hidden-size=$hidden_size \
---n-heads=12 \
---n-layers=12 \
---batch-size=$batch_size \
---max-epoch=1 \
---max-sent-len=512 \
---log-every=10 \
---validate-every=50 \
---n-valid=2000 \
---dropout=0.3 \
---lr=3e-5 \
---dset-size=20000 \
---save \
---attention-dropout \
---save-to=QQP-AD-$id
+# ## Vanilla Dropout 
+# python train.py \
+# --QQP \
+# --hidden-size=$hidden_size \
+# --n-heads=12 \
+# --n-layers=12 \
+# --batch-size=$batch_size \
+# --max-epoch=1 \
+# --max-sent-len=512 \
+# --log-every=10 \
+# --validate-every=50 \
+# --n-valid=2000 \
+# --dropout=0.3 \
+# --lr=3e-5 \
+# --dset-size=20000 \
+# --save \
+# --save-to=QQP-VD-$id 
+# ## Attention Dropout 
+# python train.py \
+# --QQP \
+# --hidden-size=$hidden_size \
+# --n-heads=12 \
+# --n-layers=12 \
+# --batch-size=$batch_size \
+# --max-epoch=1 \
+# --max-sent-len=512 \
+# --log-every=10 \
+# --validate-every=50 \
+# --n-valid=2000 \
+# --dropout=0.3 \
+# --lr=3e-5 \
+# --dset-size=20000 \
+# --save \
+# --attention-dropout \
+# --save-to=QQP-AD-$id
 
