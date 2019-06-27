@@ -93,7 +93,7 @@ python train.py \
 --log-every=10 \
 --validate-every=100 \
 --n-valid=5000 \
---dropout=0.1 \
+--dropout=0.5 \
 --lr=3e-5 \
 --save \
 --save-to=QNLI-VD-$id 
@@ -109,7 +109,7 @@ python train.py \
 --log-every=10 \
 --validate-every=100 \
 --n-valid=5000 \
---dropout=0.1 \
+--dropout=0.5 \
 --lr=3e-5 \
 --save \
 --attention-dropout \
