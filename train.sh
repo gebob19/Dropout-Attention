@@ -4,7 +4,7 @@ hidden_size="384"
 n_heads="6"
 n_layers="6"
 ## Training Params
-batch_size="16"
+batch_size="32"
 epochs="2"
 id="JUNE27"
 dset_size="10000"
