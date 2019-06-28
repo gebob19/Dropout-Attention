@@ -1,18 +1,18 @@
 
 ##IMDB
-# 6 layer
-python train.py --test --load \
---load-from=complete_IMDB-VD-JUNE26-UPDATED-6LAYER
+# # 6 layer
+# python train.py --test --load \
+# --load-from=complete_IMDB-VD-JUNE26-UPDATED-6LAYER
 
-python train.py --test --load \
---load-from=complete_IMDB-AD-JUNE26-UPDATED-6LAYER
+# python train.py --test --load \
+# --load-from=complete_IMDB-AD-JUNE26-UPDATED-6LAYER
 
-# 12 layer
-python train.py --test --load \
---load-from=complete_IMDB-VD-JUNE26-UPDATED2-6-12-LAYER
+# # 12 layer
+# python train.py --test --load \
+# --load-from=complete_IMDB-VD-JUNE26-UPDATED2-6-12-LAYER
 
-python train.py --test --load \
---load-from=complete_IMDB-AD-JUNE26-UPDATED2-6-12-LAYER
+# python train.py --test --load \
+# --load-from=complete_IMDB-AD-JUNE26-UPDATED2-6-12-LAYER
 
 
 # QQP
