@@ -88,13 +88,13 @@ python train.py \
 --n-heads=6 \
 --n-layers=6 \
 --batch-size=$batch_size \
---max-epoch=2 \
+--max-epoch=3 \
 --max-sent-len=512 \
 --log-every=10 \
 --validate-every=100 \
---n-valid=5000 \
---dset-size=20000 \
---dropout=0.4 \
+--n-valid=6000 \
+--dset-size=40000 \
+--dropout=0.5 \
 --lr=3e-5 \
 --save \
 --save-to=QNLI-VD-$id 
@@ -105,13 +105,13 @@ python train.py \
 --n-heads=6 \
 --n-layers=6 \
 --batch-size=$batch_size \
---max-epoch=2 \
+--max-epoch=3 \
 --max-sent-len=512 \
 --log-every=10 \
 --validate-every=100 \
---n-valid=5000 \
---dset-size=20000 \
---dropout=0.4 \
+--n-valid=6000 \
+--dset-size=40000 \
+--dropout=0.5 \
 --lr=3e-5 \
 --save \
 --attention-dropout \
