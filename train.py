@@ -389,17 +389,19 @@ def load_dataloader(args, tokenizer):
                     tokenizer=tokenizer)
     return loader
 
-def test_model(model, dataloader, batch_size):
+def test_model(model, dataloader, batch_size, args):
+    from tqdm import tqdm
     total_correct = 0
     total_examples = 0
     with torch.no_grad():
         model.eval()
-        for sentences, targets in dataloader.batch_iter(batch_size, train=False, process_full_df=True, show_progress=True):
-            y_pred = model(sentences)
-            n_correct = accuracy(y_pred, targets)
+        for x, y, lengths, idxs in tqdm(dataloader.batch_iter(batch_size, train=False, process_full_df=True, show_progress=False)):
+            y_pred = model(x, lengths)
+            n_correct = accuracy(y_pred, y)
 
             total_correct += n_correct
             total_examples += batch_size
+    print("-------------{}-------------".format(args['--save-to']))
     print('Accuracy: %.4f' % (total_correct / total_examples))
 
 def main(): 
@@ -415,14 +417,15 @@ def main():
     elif args['--test']:
         assert args['--load'], 'Must load a model for testing...'
         # model
-        model, _, _, _ = load(args['--load-from'])
+        model, _, _, metrics = load(args['--load-from'])
+        loaded_args = metrics['args']
         model = model.to(device)
         # dataloader
         vocab_file = './uncased_L-12_H-768_A-12/vocab.txt'
         tokenizer = tokenization.FullTokenizer(vocab_file=vocab_file, do_lower_case=True)
-        dataloader = load_dataloader(args, tokenizer)
+        dataloader = load_dataloader(loaded_args, tokenizer)
         # evaluate
-        test_model(model, dataloader, int(args['--batch-size']))
+        test_model(model, dataloader, int(loaded_args['--batch-size']), loaded_args)
     else: 
         train(args)
 
