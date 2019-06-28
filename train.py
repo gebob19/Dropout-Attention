@@ -368,7 +368,7 @@ def train(args):
             save(prefix + model_save_path, metrics, model, optimizer)
             print('Model Saved: {}'.format(prefix + model_save_path))
 
-def load_dataloader(args, tokenizer):
+def load_dataloader(args, tokenizer, test=False):
     # Load dataloader 
     loader = None 
     if args['--IMDB']:
@@ -383,8 +383,11 @@ def load_dataloader(args, tokenizer):
         loader = COLALoader
     else:
         raise RuntimeError("No Dataloader Specified.")
+
+    size = None if test else int(args['--dset-size'])
+    
     loader = loader(max_len=int(args['--max-sent-len']),
-                    size=int(args['--dset-size']),
+                    size=size,
                     device=device, 
                     tokenizer=tokenizer)
     return loader
@@ -423,7 +426,7 @@ def main():
         # dataloader
         vocab_file = './uncased_L-12_H-768_A-12/vocab.txt'
         tokenizer = tokenization.FullTokenizer(vocab_file=vocab_file, do_lower_case=True)
-        dataloader = load_dataloader(loaded_args, tokenizer)
+        dataloader = load_dataloader(loaded_args, tokenizer, test=True)
         # evaluate
         test_model(model, dataloader, int(loaded_args['--batch-size']), loaded_args)
     else: 
