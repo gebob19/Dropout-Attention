@@ -11,7 +11,7 @@ class TransformerBlock(nn.Module):
     Transformer = MultiHead_Attention + Feed_Forward with sublayer connection
     """
 
-    def __init__(self, hidden, attn_heads, feed_forward_hidden, dropout, attention_dropout, device):
+    def __init__(self, hidden, attn_heads, feed_forward_hidden, dropout, dropout_type, device):
         """
         :param hidden: hidden size of transformer
         :param attn_heads: head sizes of multi-head attention
@@ -22,12 +22,11 @@ class TransformerBlock(nn.Module):
         self.device = device
         
         # SublayerConnection = sublayer(), dropout, skip-connection, layernorm
-        self.input_sublayer = SublayerConnection(device, size=hidden, dropout=dropout, attention_dropout=attention_dropout)
-        self.output_sublayer = SublayerConnection(device, size=hidden, dropout=dropout, attention_dropout=attention_dropout)
+        self.input_sublayer = SublayerConnection(device, size=hidden, dropout=dropout, dropout_type=dropout_type)
+        self.output_sublayer = SublayerConnection(device, size=hidden, dropout=dropout, dropout_type=dropout_type)
 
         # DONT APPLY DROPOUT ELSE WHERE
-        if attention_dropout:
-            dropout = 0.
+        dropout = 0.
 
         self.attention = nn.MultiheadAttention(hidden, attn_heads, dropout=dropout)
         self.feed_forward = nn.Sequential(nn.Linear(hidden, feed_forward_hidden),
@@ -38,7 +37,7 @@ class TransformerBlock(nn.Module):
     def forward(self, x, lengths):#, mask):
         x = self.input_sublayer(x, lambda _x: self.attention(_x, _x, _x, need_weights=False)[0], lengths)
         x = self.output_sublayer(x, self.feed_forward, lengths)
-        x = self.dropout(x) 
+        # x = self.dropout(x) 
         return x
 
     def update_dropout(self, new_dropout):

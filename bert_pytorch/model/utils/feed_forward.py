@@ -12,8 +12,8 @@ class PositionwiseFeedForward(nn.Module):
         # self.activation = GELU()
 
         self.ff = nn.Sequential(nn.Linear(d_model, d_ff),
-                                    nn.ReLU(), 
-                                    nn.Linear(d_ff, d_model))
+                                nn.ReLU(), 
+                                nn.Linear(d_ff, d_model))
 
     def forward(self, x):
         return self.ff(x)

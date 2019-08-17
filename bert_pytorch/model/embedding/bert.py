@@ -33,7 +33,7 @@ class BERTEmbedding(nn.Module):
     def forward(self, sequence, segment_label):
         # removed position b/c model couldn't learn with it
         x = self.token(sequence) #+ self.position(sequence) + self.segment(segment_label)
-        return self.dropout(x)
+        return x
 
 
 def glove_embeddings(trainable):

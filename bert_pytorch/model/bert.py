@@ -20,7 +20,7 @@ class BertSaveModel(nn.Module):
         torch.save(params, path)
 
 class BERTClassificationWrapper(BertSaveModel):
-    def __init__(self, device, vocab_size, number_classes, hidden, n_layers, attn_heads, dropout, attention_dropout):
+    def __init__(self, device, vocab_size, number_classes, hidden, n_layers, attn_heads, dropout, dropout_type):
         super().__init__()
         self.number_classes = number_classes
         self.device = device
@@ -31,7 +31,7 @@ class BERTClassificationWrapper(BertSaveModel):
                          n_layers, 
                          attn_heads, 
                          dropout, 
-                         attention_dropout)
+                         dropout_type)
         self.linear = nn.Linear(hidden, number_classes)
         
     def forward(self, x, lengths):
@@ -49,7 +49,7 @@ class BERT(nn.Module):
     BERT model : Bidirectional Encoder Representations from Transformers.
     """
 
-    def __init__(self, vocab_size, device, hidden=768, n_layers=12, attn_heads=12, dropout=0.1, attention_dropout=False):
+    def __init__(self, vocab_size, device, hidden=768, n_layers=12, attn_heads=12, dropout=0.1, dropout_type='Attention'):
         """
         :param vocab_size: vocab_size of total words
         :param hidden: BERT model hidden size
@@ -64,13 +64,12 @@ class BERT(nn.Module):
         self.attn_heads = attn_heads
 
         # embedding for BERT, sum of positional, segment, token embeddings
-        embed_dropout = 0. if attention_dropout else dropout
-        self.embedding = BERTEmbedding(vocab_size=vocab_size, embed_size=hidden, dropout=embed_dropout)
+        self.embedding = BERTEmbedding(vocab_size=vocab_size, embed_size=hidden, dropout=0.)
 
         # multi-layers transformer blocks, deep network
         # paper noted they used 4*hidden_size for ff_network_hidden_size
         self.transformer_blocks = nn.ModuleList(
-            [TransformerBlock(hidden, attn_heads, 4 * hidden, dropout, attention_dropout, device) for _ in range(n_layers)])
+            [TransformerBlock(hidden, attn_heads, 4 * hidden, dropout, dropout_type, device) for _ in range(n_layers)])
 
     def forward(self, x, segment_info, lengths):
         # mask = (x > 0).unsqueeze(1).repeat(1, x.size(1), 1)

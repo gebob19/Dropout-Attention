@@ -9,34 +9,62 @@ class SublayerConnection(nn.Module):
     Note for code simplicity the norm is first as opposed to last.
     """
 
-    def __init__(self, device, size, dropout, attention_dropout):
+    def __init__(self, device, size, dropout, dropout_type):
         super().__init__()
         self.norm = nn.LayerNorm(size, eps=1e-12)
-        self.dropout = nn.Dropout(dropout)
-        self.attention_dropout = attention_dropout
-        if attention_dropout:
+        self.dropout_type = dropout_type
+        if dropout_type == 'Attention':
             self.dropout_attention = DropoutAttention(size, dropout, device)
+            # print('Using Attention Dropout')
+        elif self.dropout_type == 'EntireEmbeddingRandom':
+            self.embeddingDropout = EmbeddingDropout(size, dropout, device)
+            # print('Using Entire EMbedding Drops')
+        elif self.dropout_type == 'SingleUnitRandom':
+            self.dropout = nn.Dropout(dropout)
+            # print('Using Normal Dropout')
+        else:
+            print('Warning: Not using Dropout ({})'.format(self.dropout_type))
 
     def forward(self, x, sublayer, lengths):
         "Apply residual connection to any sublayer with the same size."
         h = sublayer(x)
         # apply dropout of choice
-        if self.attention_dropout:
+        if self.dropout_type == 'Attention':
             h = self.dropout_attention(h, lengths)
-        else:
+        elif self.dropout_type == 'SingleUnitRandom':
             h = self.dropout(h)
+        elif self.dropout_type == 'EntireEmbeddingRandom':
+            h = self.embeddingDropout(h)
         return self.norm(x + h)
 
     def update_dropout(self, new_dropout):
         if self.attention_dropout:
             self.dropout_attention.dropout = new_dropout
 
+class EmbeddingDropout(nn.Module):
+    def __init__(self, hidden, dropout, device):
+        super().__init__()
+        self.device = device
+        self.dropout = dropout
+    
+    def forward(self, x):
+        # (bs, seq_len, hidden)
+        if self.training:
+            x = x.transpose(0, 1)
+            inds = torch.bernoulli(torch.zeros((x.size(0), x.size(1))) + self.dropout)
+            x[torch.nonzero(inds).split(1, dim=1)] = 0 
+            x = x.transpose(0, 1)
+            return (x * (1. / (1. - self.dropout))) 
+        else:
+            return x
+
 class DropoutAttention(nn.Module):
     def __init__(self, hidden, dropout, device):
         super().__init__()
         self.device = device
         self.dropout = dropout
-        self.layer_embedding = torch.randn((hidden), device=device, requires_grad=True)
+        # set as parameter to update
+        self.layer_embedding = nn.Parameter(torch.randn(hidden, device=device, requires_grad=True))
         
     def forward(self, x, lengths):
         # set query key value

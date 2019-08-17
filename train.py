@@ -13,6 +13,7 @@ Options:
     --save                                  save model flag 
     --test                                  run model on test set 
     --attention-dropout                     use attention dropout flag
+    --entire-embedding-dropout              drop entire embeddings flag
     --IMDB                                  train on the IMDB dataset
     --QQP                                   train on the QQP dataset
     --QNLI                                  train on the QNLI dataset
@@ -100,6 +101,13 @@ def load(path, cpu=False, load_model=True):
         vocab_file = './uncased_L-12_H-768_A-12/vocab.txt'
         tokenizer = tokenization.FullTokenizer(vocab_file=vocab_file, do_lower_case=True)
 
+        if metrics['args']['--attention-dropout']:
+            dropout_type = 'Attention'
+        elif metrics['args']['--entire-embedding-dropout']:
+            dropout_type = 'EntireEmbeddingRandom'
+        else:
+            dropout_type = 'SingleUnitRandom'
+
         model = BERTClassificationWrapper(device,
                             len(tokenizer.vocab),
                             number_classes=2,
@@ -107,7 +115,7 @@ def load(path, cpu=False, load_model=True):
                             n_layers=n_layers,
                             attn_heads=n_heads,
                             dropout=float(metrics['args']['--dropout']),
-                            attention_dropout=metrics['args']['--attention-dropout'])
+                            dropout_type=dropout_type)
 
         optimizer = torch.optim.Adam(model.parameters())
         
@@ -187,6 +195,13 @@ def train(args):
 
         hidden_size = int(args['--hidden-size'])
 
+        if args['--attention-dropout']:
+            dropout_type = 'Attention'
+        elif args['--entire-embedding-dropout']:
+            dropout_type = 'EntireEmbeddingRandom'
+        else:
+            dropout_type = 'SingleUnitRandom'
+
         model = BERTClassificationWrapper(device,
                                 len(tokenizer.vocab),
                                 number_classes=2,
@@ -194,7 +209,7 @@ def train(args):
                                 n_layers=n_layers,
                                 attn_heads=n_heads,
                                 dropout=dropout,
-                                attention_dropout=args['--attention-dropout'])
+                                dropout_type=dropout_type)
 
         # init weights 
         for p in model.parameters():
@@ -358,7 +373,6 @@ def train(args):
                 #             print('Decreased dropout to {}...'.format(dropout))
 
     finally:
-        print(idxs, test)
         if args['--save']:
             metrics = get_metrics()
             # pp = pprint.PrettyPrinter(indent=4)
