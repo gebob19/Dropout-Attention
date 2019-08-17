@@ -9,41 +9,41 @@ epochs="2"
 id="JUNE27"
 dset_size="10000"
 
-# # IMDB
-# ## Vanilla Dropout 
-# python train.py \
-# --IMDB \
-# --hidden-size=$hidden_size \
-# --n-heads=12 \
-# --n-layers=12 \
-# --batch-size=8 \
-# --max-epoch=1 \
-# --max-sent-len=512 \
-# --log-every=10 \
-# --validate-every=50 \
-# --n-valid=2000 \
-# --dropout=0.3 \
-# --lr=3e-5 \
-# --save \
-# --save-to=IMDB-VD-$id 
+# IMDB
+## Vanilla Dropout 
+python train.py \
+--IMDB \
+--hidden-size=$hidden_size \
+--n-heads=12 \
+--n-layers=12 \
+--batch-size=8 \
+--max-epoch=1 \
+--max-sent-len=512 \
+--log-every=10 \
+--validate-every=50 \
+--n-valid=2000 \
+--dropout=0.3 \
+--lr=3e-5 \
+--save \
+--save-to=IMDB-VD-$id 
 
-# ## Attention Dropout 
-# python train.py \
-# --IMDB \
-# --hidden-size=$hidden_size \
-# --n-heads=12 \
-# --n-layers=12 \
-# --batch-size=8 \
-# --max-epoch=1 \
-# --max-sent-len=512 \
-# --log-every=10 \
-# --validate-every=50 \
-# --n-valid=2000 \
-# --dropout=0.3 \
-# --lr=3e-5 \
-# --save \
-# --attention-dropout \
-# --save-to=IMDB-AD-$id 
+## Attention Dropout 
+python train.py \
+--IMDB \
+--hidden-size=$hidden_size \
+--n-heads=12 \
+--n-layers=12 \
+--batch-size=8 \
+--max-epoch=1 \
+--max-sent-len=512 \
+--log-every=10 \
+--validate-every=50 \
+--n-valid=2000 \
+--dropout=0.3 \
+--lr=3e-5 \
+--save \
+--attention-dropout \
+--save-to=IMDB-AD-$id 
 
 ## Entire Embedding Dropout 
 python train.py \
